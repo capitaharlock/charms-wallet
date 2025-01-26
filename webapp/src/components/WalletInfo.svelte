@@ -44,6 +44,35 @@
     showClearConfirm = false;
   }
 
+  function downloadWallet() {
+    // Create an object with wallet details
+    const walletDetails = {
+      address: $wallet.address,
+      publicKey: $wallet.public_key,
+      privateKey: $wallet.private_key,
+    };
+
+    // Convert the object to a JSON string
+    const jsonString = JSON.stringify(walletDetails, null, 2);
+
+    // Create a Blob with the JSON string
+    const blob = new Blob([jsonString], { type: 'application/json' });
+
+    // Create a temporary URL for the Blob
+    const url = URL.createObjectURL(blob);
+
+    // Create an anchor element to trigger the download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'wallet_details.json'; // File name
+
+    // Programmatically click the anchor to trigger the download
+    a.click();
+
+    // Clean up by revoking the object URL
+    URL.revokeObjectURL(url);
+  }
+
   $: if ($wallet?.address) {
     fetchBalance();
   }
@@ -101,6 +130,29 @@
           </div>
         </div>
 
+        <!-- Public Key Section -->
+        <div>
+          <label for="wallet-public-key" class="block text-sm font-medium text-gray-700">Public Key</label>
+          <div class="mt-1 flex rounded-md shadow-sm">
+            <div class="relative flex-grow">
+              <input 
+                id="wallet-public-key"
+                type="text"
+                readonly 
+                value={$wallet.public_key}
+                class="block w-full pr-10 border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            <button 
+              type="button"
+              class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              on:click={() => copyToClipboard($wallet.public_key)}
+            >
+              Copy
+            </button>
+          </div>
+        </div>
+
         <!-- Private Key Section -->
         <div>
           <label for="wallet-private-key" class="block text-sm font-medium text-gray-700">Private Key</label>
@@ -144,44 +196,55 @@
         >
           Send Bitcoin
         </button>
-        <button
-          type="button"
-          on:click={handleClearWallet}
-          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-        >
-          Clear Wallet
-        </button>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            on:click={downloadWallet}
+            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Download Wallet
+          </button>
+          <button
+            type="button"
+            on:click={handleClearWallet}
+            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-800 hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            Clear Wallet
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Debug Section -->
-  {#if debugUtxos.length > 0 || debugError}
-    <details class="bg-white rounded-lg shadow-sm">
-      <summary class="px-6 py-4 cursor-pointer text-sm font-medium text-gray-900">Debug Information</summary>
-      <div class="px-6 py-4 border-t border-gray-200">
-        {#if loading}
-          <p class="text-sm text-gray-500">Loading UTXOs...</p>
-        {:else if debugError}
-          <p class="text-sm text-red-600">{debugError}</p>
-        {:else}
-          <div class="space-y-4">
-            <p class="text-sm font-medium">UTXOs Found: {debugUtxos.length}</p>
-            {#each debugUtxos as utxo}
-              <div class="bg-gray-50 rounded p-3 text-xs font-mono">
-                <p>txid: {utxo.txid}</p>
-                <p>vout: {utxo.vout}</p>
-                <p>value: {formatSats(utxo.value)} tBTC ({utxo.value} sats)</p>
-                {#if utxo.status}
-                  <p>confirmed: {utxo.status.confirmed ? 'yes' : 'no'}</p>
-                {/if}
-              </div>
-            {/each}
-          </div>
-        {/if}
-      </div>
-    </details>
-  {/if}
+  <details open class="bg-white rounded-lg shadow-sm">
+    <summary class="px-6 py-4 cursor-pointer text-sm font-medium text-gray-900">Transaction History (UTXOs)</summary>
+    <div class="px-6 py-4 border-t border-gray-200">
+      {#if loading}
+        <p class="text-sm text-gray-500">Loading UTXOs...</p>
+      {:else if debugError}
+        <p class="text-sm text-red-600">{debugError}</p>
+      {:else if debugUtxos.length > 0}
+        <div class="space-y-4">
+          <p class="text-sm font-medium">UTXOs Found: {debugUtxos.length}</p>
+          {#each debugUtxos as utxo}
+            <div class="bg-gray-50 rounded p-3 text-xs font-mono">
+              <p>txid: {utxo.txid}</p>
+              <p>vout: {utxo.vout}</p>
+              <p>value: {formatSats(utxo.value)} tBTC ({utxo.value} sats)</p>
+              {#if utxo.status}
+                <p>confirmed: {utxo.status.confirmed ? 'yes' : 'no'}</p>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      {:else}
+        <div class="text-sm text-gray-500 bg-gray-50 p-4 rounded">
+          No UTXOs available. When you receive bitcoin, they will appear here.
+        </div>
+      {/if}
+    </div>
+  </details>
 </div>
 
 <ConfirmDialog

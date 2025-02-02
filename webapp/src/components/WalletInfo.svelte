@@ -109,7 +109,7 @@
       <div class="mt-4 space-y-4">
         <!-- Address Section -->
         <div>
-          <label for="wallet-address" class="block text-sm font-medium text-gray-700">Testnet Address</label>
+          <label for="wallet-address" class="block text-sm font-medium text-gray-700">Testnet Address (Native SegWit - bech32)</label>
           <div class="mt-1 flex rounded-md shadow-sm">
             <div class="relative flex-grow">
               <input 

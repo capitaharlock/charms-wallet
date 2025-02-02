@@ -45,3 +45,7 @@ If you have state that's important to retain within a component, consider creati
 import { writable } from 'svelte/store'
 export default writable(0)
 ```
+
+## Run debug
+npm run dev
+--> Will run at | Local:   http://localhost:5173/

@@ -1,31 +1,15 @@
 <script lang="ts">
   import { wallet } from '../stores/wallet';
-  import api from '../services/api';
+  import { addresses } from '../stores/addresses';
+  import { totalBalance, confirmedBalance } from '../stores/utxos';
+  import { utxoService } from '../services/utxo';
   import { onMount } from 'svelte';
   import ConfirmDialog from './ConfirmDialog.svelte';
+  import AddressManager from './AddressManager.svelte';
+  import UTXOList from './UTXOList.svelte';
 
-  let balance = null;
-  let loading = false;
-  let debugUtxos = [];
-  let debugError = '';
   let showPrivateKey = false;
   let showClearConfirm = false;
-
-  async function fetchBalance() {
-    if ($wallet?.address) {
-      try {
-        loading = true;
-        balance = await api.getBalance($wallet.address);
-        const response = await fetch(`https://mempool.space/testnet4/api/address/${$wallet.address}/utxo`);
-        debugUtxos = await response.json();
-      } catch (e) {
-        console.error('Failed to fetch data:', e);
-        debugError = e.message;
-      } finally {
-        loading = false;
-      }
-    }
-  }
 
   async function copyToClipboard(text: string) {
     try {
@@ -41,44 +25,26 @@
 
   function confirmClear() {
     wallet.clear();
+    addresses.clear();
     showClearConfirm = false;
   }
 
   function downloadWallet() {
-    // Create an object with wallet details
     const walletDetails = {
       address: $wallet.address,
       publicKey: $wallet.public_key,
       privateKey: $wallet.private_key,
+      addresses: $addresses
     };
 
-    // Convert the object to a JSON string
     const jsonString = JSON.stringify(walletDetails, null, 2);
-
-    // Create a Blob with the JSON string
     const blob = new Blob([jsonString], { type: 'application/json' });
-
-    // Create a temporary URL for the Blob
     const url = URL.createObjectURL(blob);
-
-    // Create an anchor element to trigger the download
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'wallet_details.json'; // File name
-
-    // Programmatically click the anchor to trigger the download
+    a.download = 'wallet_details.json';
     a.click();
-
-    // Clean up by revoking the object URL
     URL.revokeObjectURL(url);
-  }
-
-  $: if ($wallet?.address) {
-    fetchBalance();
-  }
-
-  function formatSats(sats: number): string {
-    return (sats / 100_000_000).toFixed(8);
   }
 </script>
 
@@ -88,15 +54,11 @@
     <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-8 sm:p-10">
       <div class="space-y-2">
         <h3 class="text-xl font-medium text-white">Current Balance</h3>
-        {#if balance}
-          <p class="text-4xl font-bold text-white">{balance.balance} tBTC</p>
-          {#if balance.unconfirmed_balance > 0}
-            <p class="text-sm text-blue-100">Pending: {balance.unconfirmed_balance} tBTC</p>
-          {/if}
-        {:else if loading}
-          <div class="animate-pulse h-10 w-32 bg-blue-400 rounded"></div>
-        {:else}
-          <p class="text-4xl font-bold text-white">0.00000000 tBTC</p>
+        <p class="text-4xl font-bold text-white">{utxoService.formatSats($totalBalance)} tBTC</p>
+        {#if $totalBalance !== $confirmedBalance}
+          <p class="text-sm text-blue-100">
+            Pending: {utxoService.formatSats($totalBalance - $confirmedBalance)} tBTC
+          </p>
         {/if}
       </div>
     </div>
@@ -107,28 +69,7 @@
     <div class="p-6">
       <h3 class="text-lg font-medium text-gray-900">Wallet Details</h3>
       <div class="mt-4 space-y-4">
-        <!-- Address Section -->
-        <div>
-          <label for="wallet-address" class="block text-sm font-medium text-gray-700">Testnet Address (Native SegWit - bech32)</label>
-          <div class="mt-1 flex rounded-md shadow-sm">
-            <div class="relative flex-grow">
-              <input 
-                id="wallet-address"
-                type="text" 
-                readonly 
-                value={$wallet.address}
-                class="block w-full pr-10 border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              />
-            </div>
-            <button 
-              type="button"
-              class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-              on:click={() => copyToClipboard($wallet.address)}
-            >
-              Copy
-            </button>
-          </div>
-        </div>
+        <AddressManager />
 
         <!-- Public Key Section -->
         <div>
@@ -216,35 +157,7 @@
     </div>
   </div>
 
-  <!-- Debug Section -->
-  <details open class="bg-white rounded-lg shadow-sm">
-    <summary class="px-6 py-4 cursor-pointer text-sm font-medium text-gray-900">Transaction History (UTXOs)</summary>
-    <div class="px-6 py-4 border-t border-gray-200">
-      {#if loading}
-        <p class="text-sm text-gray-500">Loading UTXOs...</p>
-      {:else if debugError}
-        <p class="text-sm text-red-600">{debugError}</p>
-      {:else if debugUtxos.length > 0}
-        <div class="space-y-4">
-          <p class="text-sm font-medium">UTXOs Found: {debugUtxos.length}</p>
-          {#each debugUtxos as utxo}
-            <div class="bg-gray-50 rounded p-3 text-xs font-mono">
-              <p>txid: {utxo.txid}</p>
-              <p>vout: {utxo.vout}</p>
-              <p>value: {formatSats(utxo.value)} tBTC ({utxo.value} sats)</p>
-              {#if utxo.status}
-                <p>confirmed: {utxo.status.confirmed ? 'yes' : 'no'}</p>
-              {/if}
-            </div>
-          {/each}
-        </div>
-      {:else}
-        <div class="text-sm text-gray-500 bg-gray-50 p-4 rounded">
-          No UTXOs available. When you receive bitcoin, they will appear here.
-        </div>
-      {/if}
-    </div>
-  </details>
+  <UTXOList />
 </div>
 
 <ConfirmDialog

@@ -15,7 +15,7 @@ fi
 
 # Start the API using PM2
 echo "Starting the Rust API with PM2..."
-pm2 start ./target/release/api --name "charms-api"
+pm2 start ./target/release/api -f --name "charms-api"
 
 # Save the PM2 process list
 pm2 save

@@ -9,3 +9,8 @@ DEMO WALLET 1
   "privateKey": "cPbYp6YXgm3tHyTPXrz2oXzxUZn71NWfykSJgg9fytrYxvHbDPs1"
 }
 
+
+
+-----------------------
+
+https://api-t4.charms.dev/spells/214804bcb30f97c3f24727943d3e8267db92506a92163eb957412c5fdd6584f4

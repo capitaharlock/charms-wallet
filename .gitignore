@@ -4,3 +4,4 @@ dist/
 *.lock
 .env
 .DS_Store
+/zrjj/tools/venv

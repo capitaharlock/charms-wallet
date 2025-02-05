@@ -6,3 +6,26 @@ Fix current issues that I tell you, try to keep every other code that is working
 No need to create temp files etc, the setup.sh script can replace the content of the modified files.
 Don't add comments that look like instructions to me. Just comments to help understand the code, but short and concise.
 If you provided a previous setup.sh that was correctly executed (Assume that if i dont say the opposite) dont add again non modified scripts to the next setup.sh generation.
+
+
+-------------------------------------------------------------------------------
+
+it is failing, even hardocded: **Your Charms** **FilterRefresh** **Failed to load charms** 
+C:\Users\Workstation\Documents\Prj\bitcoinos\charms-wallet\webapp\src\services\charms.ts 
+C:\Users\Workstation\Documents\Prj\bitcoinos\charms-wallet\webapp\src\components\sections\CharmsSection.svelte
+
+the endpoint using the utxo:
+
+https://api-t4.charms.dev/spells/214804bcb30f97c3f24727943d3e8267db92506a92163eb957412c5fdd6584f4
+
+Is providing the charms data correctly:
+{"version":1,"apps":{"$0000":"n/3a375cc908521f04edd522643576c4b3085994d1534bfadaa542d29e8eadb72a/07685940306bc62984bf4a274a34d469584d9b73a01765706faf960b4c41901e"},"ins":[{"utxo_id":"6c0ae18e3a10447be257b6b1a3236c8e71a0af34d07df6985c4990b3d14fdfc6:1"}],"outs":[{"charms":{"$0000":100000}}]}
+
+1 - remove any harcoded code we added around getting charms data.
+2 - do the requests against the charms api using the "txid" from the UTXOs we have bounded to this wallet.
+3 - to be sure we are calling the right endpoints please print them in console
+
+
+-------------------------------------------------------------------------------
+
+{"version":1,"apps":{"$0000":"n/3a375cc908521f04edd522643576c4b3085994d1534bfadaa542d29e8eadb72a/07685940306bc62984bf4a274a34d469584d9b73a01765706faf960b4c41901e"},"ins":[{"utxo_id":"6c0ae18e3a10447be257b6b1a3236c8e71a0af34d07df6985c4990b3d14fdfc6:1"}],"outs":[{"charms":{"$0000":100000}}]}

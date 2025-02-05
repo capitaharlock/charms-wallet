@@ -1,35 +1,41 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { charmsService } from '../../services/charms';
-  import CharmCard from '../CharmCard.svelte';
-  
-  let charms = [];
+  import { onMount } from "svelte";
+  import { charms } from "../../stores/charms";
+  import { utxos } from "../../stores/utxos";
+  import CharmCard from "../CharmCard.svelte";
+
   let loading = true;
-  let error = '';
+  let error = "";
 
-  onMount(async () => {
-    try {
-      charms = await charmsService.getMockCharms();
-    } catch (e) {
-      error = 'Failed to load charms';
-      console.error(e);
-    } finally {
-      loading = false;
-    }
-  });
-
-  async function refreshCharms() {
+  async function loadCharms() {
     loading = true;
-    error = '';
+    error = "";
     try {
-      charms = await charmsService.getMockCharms();
+      console.log("Loading charms with UTXOs:", $utxos);
+      await charms.loadCharmsFromUTXOs($utxos);
+      console.log("Loaded charms:", $charms);
     } catch (e) {
-      error = 'Failed to refresh charms';
-      console.error(e);
+      console.error("Failed to load charms:", e);
+      error = e instanceof Error ? e.message : "Failed to load charms";
     } finally {
       loading = false;
     }
   }
+
+  // Load charms when UTXOs change
+  $: {
+    console.log("UTXOs changed:", $utxos);
+    if ($utxos && Object.keys($utxos).length > 0) {
+      loadCharms();
+    }
+  }
+
+  onMount(() => {
+    console.log("Component mounted, UTXOs:", $utxos);
+    if ($utxos && Object.keys($utxos).length > 0) {
+      loadCharms();
+    }
+  });
 </script>
 
 <div class="space-y-6">
@@ -44,11 +50,11 @@
       </button>
       <button
         type="button"
-        on:click={refreshCharms}
+        on:click={loadCharms}
         disabled={loading}
         class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
       >
-        {loading ? 'Refreshing...' : 'Refresh'}
+        {loading ? "Refreshing..." : "Refresh"}
       </button>
     </div>
   </div>
@@ -71,14 +77,16 @@
         </div>
       </div>
     </div>
-  {:else if charms.length === 0}
+  {:else if $charms.length === 0}
     <div class="text-center py-12">
       <h3 class="mt-2 text-sm font-medium text-gray-200">No charms found</h3>
-      <p class="mt-1 text-sm text-gray-400">Get started by acquiring some charms.</p>
+      <p class="mt-1 text-sm text-gray-400">
+        Get started by acquiring some charms.
+      </p>
     </div>
   {:else}
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {#each charms as charm (charm.uniqueId)}
+      {#each $charms as charm (charm.uniqueId)}
         <CharmCard {charm} />
       {/each}
     </div>

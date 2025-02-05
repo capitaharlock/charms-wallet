@@ -14,3 +14,15 @@ DEMO WALLET 1
 -----------------------
 
 https://api-t4.charms.dev/spells/214804bcb30f97c3f24727943d3e8267db92506a92163eb957412c5fdd6584f4
+
+
+-----------------------
+
+Test wallet:
+
+tprv8ZgxMBicQKsPdQmuRRZLwDCp2m4357q4ReZRbaNDjBXVqgcYgaUNexdG2Em1bzRW6KC819xvFMevktXg2RNxM3NMe7uQ8jp5L2cMYFF68jA
+
+tb1p9t4wx2sens5lkzmp87fkdlwx6y56536e36yv36pdggv64ttstsuswvwthl
+tb1pphwnklnuxx959az7rc4lmypqt7v8w8hu3np2usru4d5h9chpjgqsnlv3gg
+tb1p2ggeqexu3fqsd0crn8dptey0ysp7r2u9g5gp9nlq8557wkt2pw8q2tpncx
+

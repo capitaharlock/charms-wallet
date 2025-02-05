@@ -62,7 +62,7 @@
     data: Uint8Array,
     fromBits: number,
     toBits: number,
-    pad: boolean
+    pad: boolean,
   ): number[] {
     let acc = 0;
     let bits = 0;
@@ -174,11 +174,11 @@
 
   async function deriveNewAddress(
     publicKey: string,
-    index: number
+    index: number,
   ): Promise<string> {
     try {
       const pubKeyBytes = new Uint8Array(
-        publicKey.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || []
+        publicKey.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || [],
       );
 
       const indexBytes = new Uint8Array([
@@ -265,7 +265,7 @@
         type="text"
         bind:value={newCustomAddress}
         placeholder="Custom address (tb1q... or tb1p...)"
-        class="block w-64 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        class="block w-[40rem] border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
       />
       <button
         on:click={addCustomAddress}

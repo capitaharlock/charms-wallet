@@ -1,4 +1,7 @@
 // src/services/charms.ts
+import type { UTXO } from './utxo';
+import { apiUrl } from '../stores/settings';
+
 export interface CharmOut {
   charms: {
     [key: string]: number;
@@ -26,14 +29,27 @@ export interface ProcessedCharm {
 }
 
 class CharmsService {
-  private readonly API_BASE = 'https://api-t4.charms.dev';
+  private API_BASE: string = '';
+  private unsubscribe: () => void;
+
+  constructor() {
+    // Initialize with the current value and store unsubscribe function
+    this.unsubscribe = apiUrl.subscribe(value => {
+      this.API_BASE = value;
+    });
+  }
+
+  // Clean up subscription when service is destroyed
+  destroy() {
+    this.unsubscribe();
+  }
 
   async getCharmsByTx(txId: string): Promise<ProcessedCharm[]> {
     try {
       console.log('Fetching charms for TX:', txId);
       const response = await fetch(`${this.API_BASE}/spells/${txId}`);
       console.log('Response status:', response.status);
-      
+
       if (!response.ok) {
         console.warn(`No charms found for tx ${txId} (status: ${response.status})`);
         return [];
@@ -44,7 +60,7 @@ class CharmsService {
 
       const processed = this.processCharmsData(data, txId);
       console.log('Processed charms for tx:', processed);
-      
+
       return processed;
     } catch (error) {
       console.error(`Error fetching charms for tx ${txId}:`, error);
@@ -70,7 +86,7 @@ class CharmsService {
             console.log('Processing charm entry:', { id, amount });
             const appId = id.replace('$', '');
             const app = data.apps?.[id] || 'Unknown App';
-            
+
             const charm: ProcessedCharm = {
               uniqueId: `${txId}-${appId}-${outputIndex}-${amount}`,
               id: appId,
@@ -96,7 +112,7 @@ class CharmsService {
   async getCharmsByUTXOs(utxos: { [address: string]: UTXO[] }): Promise<ProcessedCharm[]> {
     console.log('Getting charms for UTXOs:', utxos);
     const allTxIds = new Set<string>();
-    
+
     Object.entries(utxos).forEach(([address, addressUtxos]) => {
       console.log(`Processing UTXOs for address ${address}:`, addressUtxos);
       addressUtxos.forEach(utxo => {

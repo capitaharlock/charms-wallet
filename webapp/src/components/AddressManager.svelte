@@ -2,9 +2,21 @@
   import { wallet } from "../stores/wallet";
   import { addresses } from "../stores/addresses";
   import { onMount } from "svelte";
-
+  import ConfirmDialog from "./ConfirmDialog.svelte";
   let newCustomAddress = "";
   let addressError = "";
+  let addressToDelete: string | null = null;
+
+  function handleDeleteClick(address: string) {
+    addressToDelete = address;
+  }
+
+  function confirmDelete() {
+    if (addressToDelete) {
+      addresses.deleteAddress(addressToDelete);
+      addressToDelete = null;
+    }
+  }
 
   // Bech32 constants
   const CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
@@ -103,52 +115,57 @@
   }
 
   async function addCustomAddress() {
-    if (!newCustomAddress) {
-      addressError = "Please enter an address";
-      return;
+    try {
+      if (!newCustomAddress) {
+        addressError = "Please enter an address";
+        return;
+      }
+
+      if (!newCustomAddress.startsWith("tb1")) {
+        addressError =
+          "Invalid address format: must be a testnet bech32 address (starts with tb1)";
+        return;
+      }
+
+      const p2wpkhPattern = /^tb1q[a-z0-9]{38,39}$/;
+      const p2trPattern = /^tb1p[a-z0-9]{58,59}$/;
+
+      if (
+        newCustomAddress.startsWith("tb1q") &&
+        !p2wpkhPattern.test(newCustomAddress)
+      ) {
+        addressError =
+          "Invalid SegWit address format (tb1q address length incorrect)";
+        return;
+      }
+
+      if (
+        newCustomAddress.startsWith("tb1p") &&
+        !p2trPattern.test(newCustomAddress)
+      ) {
+        addressError =
+          "Invalid Taproot address format (tb1p address length incorrect)";
+        return;
+      }
+
+      if (!validateAddress(newCustomAddress)) {
+        addressError =
+          "Invalid address format: must be a valid testnet SegWit (tb1q) or Taproot (tb1p) address";
+        return;
+      }
+
+      addresses.addAddress({
+        address: newCustomAddress,
+        index: -1,
+        created: new Date().toISOString(),
+      });
+
+      newCustomAddress = "";
+      addressError = "";
+    } catch (error) {
+      console.error("Error adding custom address:", error);
+      addressError = "Failed to verify address";
     }
-
-    if (!newCustomAddress.startsWith("tb1")) {
-      addressError =
-        "Invalid address format: must be a testnet bech32 address (starts with tb1)";
-      return;
-    }
-
-    const p2wpkhPattern = /^tb1q[a-z0-9]{38,39}$/;
-    const p2trPattern = /^tb1p[a-z0-9]{58,59}$/;
-
-    if (
-      newCustomAddress.startsWith("tb1q") &&
-      !p2wpkhPattern.test(newCustomAddress)
-    ) {
-      addressError =
-        "Invalid SegWit address format (tb1q address length incorrect)";
-      return;
-    }
-
-    if (
-      newCustomAddress.startsWith("tb1p") &&
-      !p2trPattern.test(newCustomAddress)
-    ) {
-      addressError =
-        "Invalid Taproot address format (tb1p address length incorrect)";
-      return;
-    }
-
-    if (!validateAddress(newCustomAddress)) {
-      addressError =
-        "Invalid address format: must be a valid testnet SegWit (tb1q) or Taproot (tb1p) address";
-      return;
-    }
-
-    addresses.addAddress({
-      address: newCustomAddress,
-      index: -1,
-      created: new Date().toISOString(),
-    });
-
-    newCustomAddress = "";
-    addressError = "";
   }
 
   async function copyToClipboard(text: string) {
@@ -162,14 +179,24 @@
   async function generateNewAddress() {
     if (!$wallet?.public_key) return;
 
-    const nextIndex = $addresses.length;
-    const newAddress = await deriveNewAddress($wallet.public_key, nextIndex);
+    try {
+      const nextIndex = $addresses.length;
+      const newAddress = await deriveNewAddress($wallet.public_key, nextIndex);
 
-    addresses.addAddress({
-      address: newAddress,
-      index: nextIndex,
-      created: new Date().toISOString(),
-    });
+      // Check if address already exists (shouldn't happen, but better to check)
+      if ($addresses.some((addr) => addr.address === newAddress)) {
+        console.error("Generated address already exists");
+        return;
+      }
+
+      addresses.addAddress({
+        address: newAddress,
+        index: nextIndex,
+        created: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error generating new address:", error);
+    }
   }
 
   async function deriveNewAddress(
@@ -211,15 +238,7 @@
       return;
     }
     addresses.loadAddresses();
-    if ($addresses.length === 0) {
-      await generateNewAddress();
-    }
   });
-
-  // Watch for wallet changes
-  $: if ($wallet && $addresses.length === 0) {
-    generateNewAddress();
-  }
 </script>
 
 <div class="mt-4 space-y-4">
@@ -245,6 +264,12 @@
               class="px-3 py-1 text-xs text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Copy
+            </button>
+            <button
+              on:click={() => handleDeleteClick(addr.address)}
+              class="px-3 py-1 text-xs text-white bg-red-800 hover:bg-red-900 rounded-md"
+            >
+              Delete
             </button>
           </div>
         </div>
@@ -279,3 +304,11 @@
     <p class="mt-1 text-sm text-red-600">{addressError}</p>
   {/if}
 </div>
+
+<ConfirmDialog
+  isOpen={addressToDelete !== null}
+  title="Delete Address"
+  message="Are you sure you want to delete this address?"
+  onConfirm={confirmDelete}
+  onCancel={() => (addressToDelete = null)}
+/>

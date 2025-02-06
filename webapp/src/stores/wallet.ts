@@ -18,9 +18,17 @@ function createWalletStore() {
             set(wallet)
         },
         clear: () => {
+            // Clear wallet data
             localStorage.removeItem(WALLET_STORAGE_KEY)
             localStorage.removeItem(ENCRYPTED_WALLET_KEY)
+            localStorage.removeItem('wallet_addresses')
+
+            // Clear all stores
             set(null)
+
+            // Import and clear other stores
+            import('./addresses').then(({ addresses }) => addresses.clear())
+            import('./utxos').then(({ utxos }) => utxos.clear())
         },
     }
 }

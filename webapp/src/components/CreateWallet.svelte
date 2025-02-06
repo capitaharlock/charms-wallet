@@ -42,18 +42,37 @@
         loading = false;
         return;
       }
+
+      // Only check password match in step 2
       if (password !== confirmPassword) {
         error = "Passwords do not match";
         loading = false;
         return;
       }
+
+      // Revalidate password strength before final submission
+      if (passwordStrength < 3) {
+        error = "Password strength has been compromised";
+        step = 1;
+        loading = false;
+        return;
+      }
+
       const newWallet = await api.createWallet(password);
+
+      // Encrypt the wallet with the user's password before storing
       const encrypted = CryptoJS.AES.encrypt(
         JSON.stringify(newWallet),
-        password
+        password,
       ).toString();
+
+      // Store encrypted version for secure storage
       localStorage.setItem("encrypted_wallet", encrypted);
+
+      // Update the wallet store for active use
       wallet.setWallet(newWallet);
+
+      // Clear sensitive data
       password = "";
       confirmPassword = "";
     } catch (e) {
@@ -99,6 +118,9 @@
         on:click={() => {
           mode = "create";
           error = "";
+          password = "";
+          confirmPassword = "";
+          step = 1;
         }}
         class={`px-4 py-2 rounded ${mode === "create" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}`}
       >
@@ -108,6 +130,9 @@
         on:click={() => {
           mode = "import";
           error = "";
+          password = "";
+          confirmPassword = "";
+          importKey = "";
         }}
         class={`px-4 py-2 rounded ${mode === "import" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}`}
       >
@@ -230,6 +255,7 @@
                 on:click={() => {
                   step = 1;
                   error = "";
+                  confirmPassword = ""; // Clear confirm password when going back
                 }}
                 class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >

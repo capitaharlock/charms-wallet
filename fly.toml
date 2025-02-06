@@ -1,0 +1,33 @@
+app = "charms-api-testnet4"
+primary_region = "sjc"
+
+kill_signal = "SIGTERM"
+kill_timeout = "30s"
+
+[env]
+RPC_URL = "http://localhost:48332"
+RPC_USER = "user"
+RPC_PASSWORD = "password"
+
+[build]
+image = "ghcr.io/sigma0-dev/charms:0.3.0"
+
+[deploy]
+strategy = "rolling"
+max_unavailable = 1
+wait_timeout = "1m"
+
+[http_service]
+internal_port = 17784
+force_https = true
+auto_stop_machines = "suspend"
+auto_start_machines = true
+min_machines_running = 0
+
+[http_service.concurrency]
+type = "requests"
+soft_limit = 200
+
+[[vm]]
+size = "shared-cpu-1x"
+memory = "1gb"

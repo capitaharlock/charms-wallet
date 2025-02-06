@@ -31,6 +31,11 @@ export interface ProcessedCharm {
 class CharmsService {
   private API_BASE: string = '';
   private unsubscribe: () => void;
+  private cachedCharms: Map<string, ProcessedCharm[]> = new Map();
+
+  clearCache() {
+    this.cachedCharms.clear();
+  }
 
   constructor() {
     // Initialize with the current value and store unsubscribe function
@@ -42,12 +47,25 @@ class CharmsService {
   // Clean up subscription when service is destroyed
   destroy() {
     this.unsubscribe();
+    this.cachedCharms.clear();
   }
 
   async getCharmsByTx(txId: string): Promise<ProcessedCharm[]> {
     try {
+      // Check cache first
+      if (this.cachedCharms.has(txId)) {
+        console.log('Using cached charms for TX:', txId);
+        return this.cachedCharms.get(txId) || [];
+      }
+
       console.log('Fetching charms for TX:', txId);
-      const response = await fetch(`${this.API_BASE}/spells/${txId}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch(`${this.API_BASE}/spells/${txId}`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
       console.log('Response status:', response.status);
 
       if (!response.ok) {
@@ -61,10 +79,14 @@ class CharmsService {
       const processed = this.processCharmsData(data, txId);
       console.log('Processed charms for tx:', processed);
 
+      // Cache the results
+      this.cachedCharms.set(txId, processed);
+
       return processed;
     } catch (error) {
       console.error(`Error fetching charms for tx ${txId}:`, error);
-      return [];
+      // Return cached data if available on error
+      return this.cachedCharms.get(txId) || [];
     }
   }
 
@@ -110,30 +132,46 @@ class CharmsService {
   }
 
   async getCharmsByUTXOs(utxos: { [address: string]: UTXO[] }): Promise<ProcessedCharm[]> {
-    console.log('Getting charms for UTXOs:', utxos);
-    const allTxIds = new Set<string>();
+    try {
+      console.log('Getting charms for UTXOs:', utxos);
+      const allTxIds = new Set<string>();
 
-    Object.entries(utxos).forEach(([address, addressUtxos]) => {
-      console.log(`Processing UTXOs for address ${address}:`, addressUtxos);
-      addressUtxos.forEach(utxo => {
-        allTxIds.add(utxo.txid);
+      Object.entries(utxos).forEach(([address, addressUtxos]) => {
+        console.log(`Processing UTXOs for address ${address}:`, addressUtxos);
+        addressUtxos.forEach(utxo => {
+          allTxIds.add(utxo.txid);
+        });
       });
-    });
 
-    const txIdArray = Array.from(allTxIds);
-    console.log('Found transaction IDs:', txIdArray);
+      const txIdArray = Array.from(allTxIds);
+      console.log('Found transaction IDs:', txIdArray);
 
-    const allCharms: ProcessedCharm[] = [];
-    for (const txId of txIdArray) {
-      const charms = await this.getCharmsByTx(txId);
-      if (charms.length > 0) {
-        console.log(`Found ${charms.length} charms in tx ${txId}:`, charms);
-        allCharms.push(...charms);
+      // Process transactions in parallel with a limit of 3 concurrent requests
+      const allCharms: ProcessedCharm[] = [];
+      const batchSize = 3;
+
+      for (let i = 0; i < txIdArray.length; i += batchSize) {
+        const batch = txIdArray.slice(i, i + batchSize);
+        const batchResults = await Promise.allSettled(
+          batch.map(txId => this.getCharmsByTx(txId))
+        );
+
+        batchResults.forEach((result, index) => {
+          if (result.status === 'fulfilled' && result.value.length > 0) {
+            console.log(`Found ${result.value.length} charms in tx ${batch[index]}:`, result.value);
+            allCharms.push(...result.value);
+          }
+        });
       }
-    }
 
-    console.log('Final total charms:', allCharms);
-    return allCharms;
+      console.log('Final total charms:', allCharms);
+      return allCharms;
+    } catch (error) {
+      console.error('Error fetching charms:', error);
+      // Return all cached charms if available
+      const cachedResults = Array.from(this.cachedCharms.values()).flat();
+      return cachedResults;
+    }
   }
 }
 

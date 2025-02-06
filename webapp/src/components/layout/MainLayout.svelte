@@ -76,7 +76,12 @@
   <!-- Main Content -->
   <main class="flex-grow py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {#if $activeSection === "wallets"}
+      <!-- Wallet Section -->
+      <div
+        class="transition-opacity duration-200"
+        class:opacity-0={$activeSection !== "wallets"}
+        class:hidden={$activeSection !== "wallets"}
+      >
         {#if !$wallet}
           <div class="text-center max-w-2xl mx-auto">
             <h1 class="text-4xl font-bold text-gray-900 mb-4">
@@ -90,11 +95,25 @@
         {:else}
           <slot />
         {/if}
-      {:else if $activeSection === "charms"}
+      </div>
+
+      <!-- Charms Section - Always mounted, just hidden -->
+      <div
+        class="transition-opacity duration-200"
+        class:opacity-0={$activeSection !== "charms"}
+        class:hidden={$activeSection !== "charms"}
+      >
         <CharmsSection />
-      {:else if $activeSection === "settings"}
+      </div>
+
+      <!-- Settings Section -->
+      <div
+        class="transition-opacity duration-200"
+        class:opacity-0={$activeSection !== "settings"}
+        class:hidden={$activeSection !== "settings"}
+      >
         <SettingsSection />
-      {/if}
+      </div>
     </div>
   </main>
 

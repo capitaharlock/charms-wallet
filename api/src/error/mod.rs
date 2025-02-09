@@ -17,6 +17,10 @@ pub enum WalletError {
     NetworkError(String),
     #[error("Invalid amount: {0}")]
     InvalidAmount(String),
+    #[error("Invalid transaction: {0}")]
+    InvalidTransaction(String),
+    #[error("Invalid key: {0}")]
+    InvalidKey(String),
 }
 
 pub type WalletResult<T> = Result<T, WalletError>;
@@ -28,6 +32,8 @@ impl IntoResponse for WalletError {
             WalletError::InvalidAddress(msg) => (StatusCode::BAD_REQUEST, msg),
             WalletError::NetworkError(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
             WalletError::InvalidAmount(msg) => (StatusCode::BAD_REQUEST, msg),
+            WalletError::InvalidTransaction(msg) => (StatusCode::BAD_REQUEST, msg),
+            WalletError::InvalidKey(msg) => (StatusCode::BAD_REQUEST, msg),
         };
 
         let body = Json(json!({

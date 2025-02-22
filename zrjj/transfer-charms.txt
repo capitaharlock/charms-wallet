@@ -1,0 +1,58 @@
+
+Transfer charms task
+
+------------------------------
+MAKE DIALOG
+Read charms data and put it in a json
+When click on transfer, open a dialog box
+The dialog parses the json charm and creates this form in rows
+row 0 - Title: Token/Nft Transfer
+row 1 - prints the available amount (taken from the charm in the json)
+row 2 - Add input box so the user can type the amount
+row 3 - The button Start transfer
+
+-------------------------------
+CREATE THE SPELL
+Once we know the amount, we need to build the spell based on the UTXO spell data, it will be a json with:
+
+"""
+version: 1
+
+apps:
+  $01: t/${app_id}/${app_vk} (TAKE IT FROM THE SOURCE UTXO + add the assets we're not touching)
+
+ins:
+  - utxo_id: ${in_utxo_1}
+    charms:
+      $01: 69420 (CALCULATE)
+
+outs:
+  - address: ${addr_3} (THE NEW RECIPIENT ADDRESS)
+    charms:
+      $01: 420
+
+  - address: ${addr_4} (BACK TO THE SAME WALLET)
+    charms:
+      $01: 69000 (CALCULATE)
+"""
+
+-------------------------------
+
+Then we send to the wallet API:
+
+From WALLET
+
+> Funding UTXOid:number (check that we have one available)
+> spell json
+> destination address (is it needed ?)
+
+In API WALLET
+we will create here 2 txs (may be calling the Charms API or doing it using Charms SDK):
+1 - commit tx using the funding UTXO
+2 - cast transaction (spell json + app_bins) | contains the spell and proof in the witness
+
+In WALLET
+The raw tx are sent back to the Wallet, and those are prompted to be signed by the user
+
+In API WALLET
+We cast the TX to the Testnet4 BTC node

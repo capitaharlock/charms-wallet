@@ -1,0 +1,3 @@
+
+
+alias b = bitcoin - cli

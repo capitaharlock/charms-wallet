@@ -43,32 +43,17 @@ pub struct FeeEstimateResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BroadcastTxRequest {
-    pub tx: TransactionData,
-    pub private_key: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TransactionData {
-    pub version: u32,
-    pub inputs: Vec<TxInput>,
-    pub outputs: Vec<TxOutput>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TxInput {
-    pub txid: String,
-    pub vout: u32,
-    pub sequence: u32,
-    pub value: u64,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TxOutput {
-    pub address: String,
-    pub value: u64,
+    pub tx_hex: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BroadcastTxResponse {
     pub txid: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TransferCharmsRequest {
+    pub spell_json: String,
+    pub funding_utxo_id: String,
+    pub destination_address: String,
 }

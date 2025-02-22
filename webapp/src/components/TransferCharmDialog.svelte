@@ -6,6 +6,7 @@
     import placeholderImage from "../assets/placeholder.jpg";
     import { wallet } from "../stores/wallet";
     import { utxos } from "../stores/utxos";
+    import { charmsTransactionService } from "../services/charmsTransactionService";
 
     function formatTxHex(hex: string): string {
         const chunkSize = 64; // Number of characters per line
@@ -17,11 +18,16 @@
     export let show: boolean = false;
     export let onClose: () => void;
 
-    let transferAmount: number = 0;
-    let destinationAddress: string = "";
+    let transferAmount: number = 55342;
+    let destinationAddress: string =
+        "tb1qfmdy2ek8j3uga4q76td3ka2dhmwrag3jwhppd9";
     let logMessages: string[] = [];
     let currentAddress: string = "";
     let transactionHex: string | null = null;
+    let signedTxHex: string | null = null;
+    let signedTxHash: string | null = null;
+    let signedTx: { hex: string; hash: string; signature: string } | null =
+        null;
 
     // Get the current wallet address
     wallet.subscribe((w) => {
@@ -102,8 +108,51 @@
     }
 
     async function handleSign() {
-        // TODO: Implement signing logic
-        logMessages = [...logMessages, "Signing transaction..."];
+        console.log("handleSign called X!");
+
+        if (!transactionHex) {
+            console.log("No tx");
+            return;
+        }
+
+        console.log("handleSign 2");
+
+        try {
+            logMessages = [...logMessages, "Signing transaction..."];
+
+            // Get current wallet
+            const currentWallet = $wallet;
+            if (!currentWallet?.private_key) {
+                throw new Error("No wallet available");
+            }
+
+            // Sign the transaction
+            const result = await charmsTransactionService.signTransaction(
+                transactionHex,
+                currentWallet.private_key,
+            );
+
+            // Update the displayed transaction data
+            signedTxHex = transactionHex; // Keep the original tx data
+            signedTxHash = result.hash; // Store the signature hash
+            signedTx = result; // Store complete signature data
+            transactionHex = null;
+
+            logMessages = [
+                ...logMessages,
+                "Transaction hash (pre-sign):",
+                result.hash,
+                "", // Empty line for spacing
+                "Signature:",
+                result.signature,
+            ];
+        } catch (error: any) {
+            logMessages = [
+                ...logMessages,
+                `Signing failed: ${error.message || error}`,
+            ];
+        }
+        console.log("handleSign end");
     }
 
     function handleClose() {
@@ -214,7 +263,7 @@
         </div>
 
         <!-- Row 6: TX Data -->
-        {#if transactionHex}
+        {#if transactionHex && !signedTxHex}
             <div class="mt-4">
                 <h4 class="text-sm font-medium text-gray-700 mb-2">TX Data</h4>
                 <div
@@ -223,6 +272,43 @@
                     <p class="text-gray-700 whitespace-pre">
                         {formatTxHex(transactionHex)}
                     </p>
+                </div>
+            </div>
+        {/if}
+
+        <!-- Row 7: Signature Data -->
+        {#if signedTxHex}
+            <div class="mt-4">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">
+                    Transaction Data
+                </h4>
+                <div
+                    class="bg-gray-50 rounded-md p-3 h-24 overflow-y-auto font-mono text-xs"
+                >
+                    <p class="text-gray-700 whitespace-pre">
+                        {formatTxHex(signedTxHex)}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Row 8: Signature Hash -->
+            <div class="mt-4">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">
+                    Signature data
+                </h4>
+                <div
+                    class="bg-gray-50 rounded-md p-3 h-24 overflow-y-auto font-mono text-xs"
+                >
+                    <div class="text-gray-700 whitespace-pre space-y-2">
+                        <p>
+                            Transaction hash (pre-sign):<br />
+                            {signedTxHash}
+                            {#if signedTx?.signature}
+                                Signature:<br />
+                                {signedTx.signature}
+                            {/if}
+                        </p>
+                    </div>
                 </div>
             </div>
         {/if}
@@ -238,21 +324,29 @@
         >
             Close
         </button>
-        {#if !transactionHex}
+        {#if signedTxHex}
             <button
                 type="button"
-                on:click={handleTransfer}
+                on:click={() => {}}
                 class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-                Start Transfer
+                Broadcast Transaction
             </button>
-        {:else}
+        {:else if transactionHex}
             <button
                 type="button"
                 on:click={handleSign}
                 class="inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
                 Sign Transaction
+            </button>
+        {:else}
+            <button
+                type="button"
+                on:click={handleTransfer}
+                class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+                Start Transfer
             </button>
         {/if}
     </div>

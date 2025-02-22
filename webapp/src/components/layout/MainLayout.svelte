@@ -1,8 +1,10 @@
 <script lang="ts">
   import { wallet } from "../../stores/wallet";
   import { activeSection } from "../../stores/navigation";
+  import { transferDialog } from "../../stores/transfer";
   import CharmsSection from "../sections/CharmsSection.svelte";
   import SettingsSection from "../sections/SettingsSection.svelte";
+  import TransferCharmDialog from "../TransferCharmDialog.svelte";
 
   type Section = "wallets" | "charms" | "settings";
 
@@ -11,7 +13,8 @@
   }
 </script>
 
-<div class="min-h-screen flex flex-col bg-gray-50">
+<!-- Main Layout -->
+<div class="min-h-screen flex flex-col bg-gray-50 relative">
   <!-- Header -->
   <header class="bg-white shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -129,3 +132,12 @@
     </div>
   </footer>
 </div>
+
+<!-- Transfer Dialog (outside main layout) -->
+{#if $transferDialog.isOpen && $transferDialog.charm}
+  <TransferCharmDialog
+    charm={$transferDialog.charm}
+    show={$transferDialog.isOpen}
+    onClose={() => transferDialog.close()}
+  />
+{/if}

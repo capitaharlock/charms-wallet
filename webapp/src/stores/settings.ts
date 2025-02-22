@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 
-const DEFAULT_API_URL = 'https://api-t4.charms.dev';
+const DEFAULT_API_URL = process.env.VITE_CHARMS_API_URL || 'https://api-t4.charms.dev';
 
 // Helper to validate and format API URL
 const formatApiUrl = (url: string) => {

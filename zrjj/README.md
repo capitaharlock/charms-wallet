@@ -24,18 +24,17 @@ tprv8ZgxMBicQKsPdQmuRRZLwDCp2m4357q4ReZRbaNDjBXVqgcYgaUNexdG2Em1bzRW6KC819xvFMev
 tb1p9t4wx2sens5lkzmp87fkdlwx6y56536e36yv36pdggv64ttstsuswvwthl
 tb1pphwnklnuxx959az7rc4lmypqt7v8w8hu3np2usru4d5h9chpjgqsnlv3gg
 
+wallet-rjj (4 utxos)
+tb1qxk5jszesz24z2jxpukuvtdu35ht2cwvks36j7t
+
 charms
 tb1p2ggeqexu3fqsd0crn8dptey0ysp7r2u9g5gp9nlq8557wkt2pw8q2tpncx
 
 btc
 tb1qfmdy2ek8j3uga4q76td3ka2dhmwrag3jwhppd9
 
+
 -----------------------
+broadcast TX
 
-US PWC
-+1 813 351 2990
-
-PWC number
-+420 251 151 111
-+420 734 798 882
-
+b sendrawtransaction 02000000010bdc4ead5c84270edcb837c7ea118dd6dd399b3eae7c747cba21c95102c27621000000006b48304502203b395c2924dea8601c1f880022ca2ae25071f78f46b28ea29ce80afeb4bdbfed022100e9231e1f0e154c000e1ab0051d2d478be2d15eba9ee370e47e2e366faaa182be0121032ba69479a48233fe458bd9c56f0fc0f1d54b868cc24c6acd1585cd0e90ebcd7cffffffff0222020000000000001600144eda4566c794788ed41ed2db1b754dbedc3ea232220200000000000016001435a9280b3012aa2548c1e5b8c5b791a5d6ac399600000000

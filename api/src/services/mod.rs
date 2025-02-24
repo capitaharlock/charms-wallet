@@ -1,7 +1,7 @@
 // api/src/services/mod.rs
 
-mod external;
-mod local;
+pub mod external;
+pub mod local;
 
 pub use external::ExternalWalletService;
 pub use local::LocalWalletService;

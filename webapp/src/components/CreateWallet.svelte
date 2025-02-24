@@ -1,7 +1,7 @@
 <!-- src/components/CreateWallet.svelte -->
 <script lang="ts">
   import { wallet } from "../stores/wallet";
-  import api from "../services/api";
+  import { walletApi } from "../services/wallet";
   import CryptoJS from "crypto-js";
 
   let mode: "create" | "import" = "create";
@@ -58,7 +58,7 @@
         return;
       }
 
-      const newWallet = await api.createWallet(password);
+      const newWallet = await walletApi.createWallet(password);
 
       // Encrypt the wallet with the user's password before storing
       const encrypted = CryptoJS.AES.encrypt(
@@ -92,7 +92,7 @@
         loading = false;
         return;
       }
-      const importedWallet = await api.importWallet(importKey);
+      const importedWallet = await walletApi.importWallet(importKey);
       if (!importedWallet) {
         error = "Invalid private key";
         loading = false;

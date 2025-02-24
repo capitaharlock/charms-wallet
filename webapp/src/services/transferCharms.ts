@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.VITE_WALLET_API_URL || 'https://api.charms.proars.com';
+const API_URL = 'http://localhost:3355';
 
 const transferCharms = async (recipient: string, amount: number, spellJson: string, fundingUtxoId: string) => {
     // Validate inputs

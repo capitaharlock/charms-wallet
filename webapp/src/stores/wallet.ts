@@ -1,5 +1,5 @@
 import { writable } from "svelte/store"
-import type { Wallet } from "../services/api"
+import type { Wallet } from "../types"
 
 const WALLET_STORAGE_KEY = "bitcoin_wallet"
 const ENCRYPTED_WALLET_KEY = "encrypted_wallet"

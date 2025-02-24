@@ -2,7 +2,7 @@
   import { wallet } from "../stores/wallet";
   import { addresses } from "../stores/addresses";
   import { totalBalance, confirmedBalance } from "../stores/utxos";
-  import { utxoService } from "../services/utxo";
+  import { walletApi } from "../services/wallet";
   import { onMount } from "svelte";
   import ConfirmDialog from "./ConfirmDialog.svelte";
   import AddressManager from "./AddressManager.svelte";
@@ -59,11 +59,11 @@
       <div class="space-y-2">
         <h3 class="text-xl font-medium text-white">Current Balance</h3>
         <p class="text-4xl font-bold text-white">
-          {utxoService.formatSats($totalBalance)} tBTC
+          {walletApi.formatSats($totalBalance)} tBTC
         </p>
         {#if $totalBalance !== $confirmedBalance}
           <p class="text-sm text-blue-100">
-            Pending: {utxoService.formatSats($totalBalance - $confirmedBalance)}
+            Pending: {walletApi.formatSats($totalBalance - $confirmedBalance)}
             tBTC
           </p>
         {/if}

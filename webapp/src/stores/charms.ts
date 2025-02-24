@@ -1,8 +1,8 @@
 // src/stores/charms.ts
-import { writable } from 'svelte/store';
-import type { ProcessedCharm } from '../services/charms';
-import { charmsService } from '../services/charms';
-import type { UTXO } from '../services/utxo';
+import { writable, get } from 'svelte/store';
+import type { ProcessedCharm } from '../types';
+import { charmsService } from '../services/charms/index';
+import type { UTXO } from '../types';
 
 function createCharmsStore() {
   const { subscribe, set } = writable<ProcessedCharm[]>([]);
@@ -16,7 +16,14 @@ function createCharmsStore() {
       const charms = await charmsService.getCharmsByUTXOs(utxos);
       set(charms);
       loading.set(false);
-    }
+    },
+    updateCharm(updatedCharm: ProcessedCharm) {
+      set(
+        [...get(charms)].map((charm) =>
+          charm.uniqueId === updatedCharm.uniqueId ? updatedCharm : charm
+        )
+      );
+    },
   };
 }
 

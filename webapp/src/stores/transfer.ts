@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { ProcessedCharm } from '../services/charms';
+import type { ProcessedCharm } from '../types';
 
 interface TransferDialogState {
     isOpen: boolean;

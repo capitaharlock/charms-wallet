@@ -1,20 +1,24 @@
 <script lang="ts">
-    import type { ProcessedCharm } from "../services/charms";
-    import { charmsService } from "../services/charms";
+    import type { ProcessedCharm } from "../types";
+    import { charmsService } from "../services/charms/index";
     import transferCharms from "../services/transferCharms";
     import Modal from "./Modal.svelte";
-    import { decodeTx } from "../utils/txDecoder";
-    import placeholderImage from "../assets/placeholder.jpg";
     import { wallet } from "../stores/wallet";
     import { utxos } from "../stores/utxos";
-    import { charmsTransactionService } from "../services/charmsTransactionService";
-    import { prepareTransactionForBroadcast } from "../services/transactionBuilder";
+    import { charmsTransactionService } from "../services/charms/transaction";
+    import { charms } from "../stores/charms";
+    import {
+        broadcastTransactionService,
+        signTransactionService,
+    } from "../services/transaction";
+    import type { SignedTransaction } from "../types";
 
-    function formatTxHex(hex: string): string {
-        const chunkSize = 64; // Number of characters per line
-        const chunks = hex.match(new RegExp(`.{1,${chunkSize}}`, "g")) || [];
-        return chunks.join("\n");
-    }
+    // Import new components
+    import CharmInfo from "./transfer-charm/CharmInfo.svelte";
+    import TransferForm from "./transfer-charm/TransferForm.svelte";
+    import SpellViewer from "./transfer-charm/SpellViewer.svelte";
+    import TransactionViewer from "./transfer-charm/TransactionViewer.svelte";
+    import SignedTransactionViewer from "./transfer-charm/SignedTransactionViewer.svelte";
 
     export let charm: ProcessedCharm;
     export let show: boolean = false;
@@ -26,10 +30,13 @@
     let logMessages: string[] = [];
     let currentAddress: string = "";
     let transactionHex: string | null = null;
-    let signedTxHex: string | null = null;
-    let signedTxHash: string | null = null;
-    let signedTx: { hex: string; hash: string; signature: string } | null =
-        null;
+    let signedCommitTx: SignedTransaction | null = null;
+    let signedSpellTx: SignedTransaction | null = null;
+    $: signedCommitTx; // Add this line
+    $: signedSpellTx; // Add this line
+    let result: {
+        transactions: { commit_tx: string; spell_tx: string };
+    } | null = null;
 
     // Get the current wallet address
     wallet.subscribe((w) => {
@@ -90,16 +97,19 @@
             ];
 
             const fundingUtxoId = `${charm.txid}:${charm.outputIndex}`;
-            const result = await transferCharms(
+            const response = await transferCharms(
                 destinationAddress,
                 transferAmount,
                 finalSpell,
                 fundingUtxoId,
             );
-            transactionHex = result.tx.tx_hex;
+            result = response;
+            transactionHex = response.transactions.spell_tx;
             logMessages = [
                 ...logMessages,
                 `Transfer successful! Transaction ready to sign.`,
+                `Commit Transaction: ${response.transactions.commit_tx}`,
+                `Spell Transaction: ${response.transactions.spell_tx}`,
             ];
         } catch (error: any) {
             logMessages = [
@@ -109,18 +119,21 @@
         }
     }
 
-    async function handleSign() {
-        console.log("handleSign called X!");
-
-        if (!transactionHex) {
-            console.log("No tx");
+    async function signAndBroadcastTxs() {
+        console.log("signAndBroadcastTxs called");
+        if (
+            !result?.transactions?.commit_tx ||
+            !result?.transactions?.spell_tx
+        ) {
+            logMessages = [...logMessages, "No transactions to sign"];
             return;
         }
 
-        console.log("handleSign 2");
-
         try {
-            logMessages = [...logMessages, "Signing transaction..."];
+            logMessages = [
+                ...logMessages,
+                "Starting transaction signing and broadcasting process...",
+            ];
 
             // Get current wallet
             const currentWallet = $wallet;
@@ -128,234 +141,108 @@
                 throw new Error("No wallet available");
             }
 
-            // Sign the transaction
-            const result = await charmsTransactionService.signTransaction(
-                transactionHex,
+            // Sign both transactions
+            const {
+                signedCommitTx: signedCommitResult,
+                signedSpellTx: signedSpellResult,
+            } = await signTransactionService.signBothTransactions(
+                result.transactions,
                 currentWallet.private_key,
+                (message) => {
+                    logMessages = [...logMessages, message];
+                },
             );
 
-            // Prepare the transaction for broadcast
-            signedTxHex = prepareTransactionForBroadcast(
-                transactionHex,
-                result.signature,
-                currentWallet.public_key,
-            );
-            signedTxHash = result.hash;
-            signedTx = result;
+            signedCommitTx = signedCommitResult;
+            signedSpellTx = signedSpellResult;
             transactionHex = null;
 
-            logMessages = [
-                ...logMessages,
-                "Transaction hash (pre-sign):",
-                result.hash,
-                "", // Empty line for spacing
-                "Signature:",
-                result.signature,
-            ];
-        } catch (error: any) {
-            logMessages = [
-                ...logMessages,
-                `Signing failed: ${error.message || error}`,
-            ];
-        }
-        console.log("handleSign end");
-    }
+            // Broadcast the signed transactions
+            const { commitData, spellData } =
+                await broadcastTransactionService.broadcastBothTransactions(
+                    signedCommitTx,
+                    signedSpellTx,
+                    (message) => {
+                        logMessages = [...logMessages, message];
+                    },
+                );
 
-    function handleBroadcast() {
-        if (!signedTxHex) {
-            console.log("No signed transaction available");
-            return;
+            // Update the charm object with the transaction IDs
+            charm = {
+                ...charm,
+                commitTxId: commitData.txid,
+                spellTxId: spellData.txid,
+            };
+
+            // Update the charms store with the updated charm object
+            charms.updateCharm(charm);
+
+            // Store transactions in localStorage
+            localStorage.setItem(
+                "commitTransaction",
+                JSON.stringify(signedCommitTx),
+            );
+            localStorage.setItem(
+                "spellTransaction",
+                JSON.stringify(signedSpellTx),
+            );
+
+            // Clear the signed transactions
+            signedCommitTx = null;
+            signedSpellTx = null;
+
+            console.log("Transfer process completed successfully");
+        } catch (error: any) {
+            console.error("Error in signAndBroadcastTxs:", error);
+            logMessages = [
+                ...logMessages,
+                `Transaction failed: ${error.message || error}`,
+            ];
         }
-        console.log("Broadcasting transaction:", signedTxHex);
     }
 
     function handleClose() {
         logMessages = [];
         transferAmount = 0;
         transactionHex = null;
+        result = null;
+        signedCommitTx = null;
+        signedSpellTx = null;
         onClose();
     }
 </script>
 
 <Modal {show} onClose={handleClose}>
     <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-        <!-- Row 0: Title -->
         <h3 class="text-lg font-semibold leading-6 text-gray-900 mb-4">
             Charms Transfer
         </h3>
 
-        <!-- Row 1: Charm Info -->
-        <div class="mb-6 bg-gray-50 rounded-lg p-4">
-            <div class="flex items-start justify-between">
-                <div class="space-y-2">
-                    <h4 class="text-sm font-medium text-gray-900">
-                        Charm #{charm.id}
-                    </h4>
-                    <p class="text-sm text-gray-500">
-                        Available Amount: <span
-                            class="font-medium text-gray-900"
-                            >{(
-                                charm.amount - (transferAmount || 0)
-                            ).toLocaleString()}</span
-                        >
-                    </p>
-                    <p class="text-xs text-gray-400">
-                        Total: {charm.amount.toLocaleString()}
-                    </p>
-                </div>
-                <div class="w-16 h-16 bg-white rounded-lg overflow-hidden">
-                    <img
-                        src={placeholderImage}
-                        alt="Charm"
-                        class="w-full h-full object-contain"
-                    />
-                </div>
-            </div>
-        </div>
+        <CharmInfo {charm} {transferAmount} />
 
-        <!-- Row 2: Amount and Address Inputs -->
-        <div class="space-y-4">
-            <div>
-                <label
-                    for="address"
-                    class="block text-sm font-medium text-gray-700 mb-1"
-                >
-                    Destination Address
-                </label>
-                <input
-                    type="text"
-                    id="address"
-                    bind:value={destinationAddress}
-                    placeholder="Enter recipient's address"
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                />
-            </div>
+        <TransferForm {charm} bind:transferAmount bind:destinationAddress />
 
-            <div>
-                <label
-                    for="amount"
-                    class="block text-sm font-medium text-gray-700 mb-1"
-                >
-                    Transfer Amount
-                </label>
-                <input
-                    type="number"
-                    id="amount"
-                    bind:value={transferAmount}
-                    min="0"
-                    max={charm.amount}
-                    on:input={(e) => {
-                        const value = Number(e.currentTarget.value);
-                        if (value > charm.amount) {
-                            e.currentTarget.value = charm.amount.toString();
-                            transferAmount = charm.amount;
-                        }
-                    }}
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                />
-            </div>
-        </div>
-
-        <!-- Row 3: Separator -->
         <div class="border-t border-gray-200 my-4"></div>
 
-        <!-- Row 5: Log Box -->
-        <div class="mt-4">
-            <h4 class="text-sm font-medium text-gray-700 mb-2">
-                Building the spell
-            </h4>
-            <div
-                class="bg-gray-50 rounded-md p-3 h-48 overflow-y-auto font-mono text-xs"
-            >
-                <p class="text-gray-700 whitespace-pre mb-3">{spellTemplate}</p>
-                {#each logMessages as message}
-                    <p class="text-gray-700 mb-3 whitespace-pre">
-                        {message}
-                    </p>
-                {/each}
-            </div>
-        </div>
+        <SpellViewer {spellTemplate} {logMessages} />
 
-        <!-- Row 6: TX Data -->
-        {#if transactionHex && !signedTxHex}
-            <div class="mt-4">
-                <h4 class="text-sm font-medium text-gray-700 mb-2">TX Data</h4>
-                <div
-                    class="bg-gray-50 rounded-md p-3 h-48 overflow-y-auto font-mono text-xs"
-                >
-                    <div class="mb-2">
-                        <h5 class="text-xs font-medium text-gray-600 mb-1">
-                            Raw Transaction Hex:
-                        </h5>
-                        <p class="text-gray-700 whitespace-pre overflow-x-auto">
-                            {formatTxHex(transactionHex)}
-                        </p>
-                    </div>
-                    {#if transactionHex}
-                        <div>
-                            <h5 class="text-xs font-medium text-gray-600 mb-1">
-                                Decoded Transaction:
-                            </h5>
-                            <p
-                                class="text-gray-700 whitespace-pre overflow-x-auto"
-                            >
-                                {@html (() => {
-                                    try {
-                                        const decoded =
-                                            decodeTx(transactionHex);
-                                        return decoded
-                                            ? `<pre>${JSON.stringify(decoded, null, 2)}</pre>`
-                                            : "Error decoding transaction";
-                                    } catch (error) {
-                                        console.error(
-                                            "Error decoding transaction:",
-                                            error,
-                                        );
-                                        return "Error decoding transaction";
-                                    }
-                                })()}
-                            </p>
-                        </div>
-                    {/if}
-                </div>
-            </div>
+        {#if transactionHex && !signedCommitTx && !signedSpellTx}
+            <TransactionViewer
+                title="Commit Transaction"
+                transactionHex={result?.transactions?.commit_tx || ""}
+            />
+            <TransactionViewer title="Spell Transaction" {transactionHex} />
         {/if}
 
-        <!-- Row 7: Signature Data -->
-        {#if signedTxHex}
-            <div class="mt-4">
-                <h4 class="text-sm font-medium text-gray-700 mb-2">
-                    Transaction Data
-                </h4>
-                <div
-                    class="bg-gray-50 rounded-md p-3 h-24 overflow-y-auto font-mono text-xs"
-                >
-                    <p class="text-gray-700 whitespace-pre">
-                        {formatTxHex(signedTxHex)}
-                    </p>
-                </div>
-            </div>
-
-            <!-- Row 8: Signature Hash -->
-            <div class="mt-4">
-                <h4 class="text-sm font-medium text-gray-700 mb-2">
-                    Signature data
-                </h4>
-                <div
-                    class="bg-gray-50 rounded-md p-3 h-24 overflow-y-auto font-mono text-xs"
-                >
-                    <div class="text-gray-700 whitespace-pre space-y-2">
-                        <p>
-                            Transaction hash (pre-sign):<br />
-                            {signedTxHash}
-                            {#if signedTx?.signature}
-                                Signature:<br />
-                                {signedTx.signature}
-                            {/if}
-                        </p>
-                    </div>
-                </div>
-            </div>
+        {#if signedCommitTx || signedSpellTx}
+            <SignedTransactionViewer
+                title="Signed Commit Transaction"
+                transaction={signedCommitTx}
+            />
+            <SignedTransactionViewer
+                title="Signed Spell Transaction"
+                transaction={signedSpellTx}
+            />
         {/if}
     </div>
 
@@ -369,21 +256,13 @@
         >
             Close
         </button>
-        {#if signedTxHex}
+        {#if transactionHex}
             <button
                 type="button"
-                on:click={handleBroadcast}
-                class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-                Broadcast Transaction
-            </button>
-        {:else if transactionHex}
-            <button
-                type="button"
-                on:click={handleSign}
+                on:click={signAndBroadcastTxs}
                 class="inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
-                Sign Transaction
+                Sign & Broadcast Transactions
             </button>
         {:else}
             <button

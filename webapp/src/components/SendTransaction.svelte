@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { wallet } from '../stores/wallet';
-  import api from '../services/api';
+  import { wallet } from "../stores/wallet";
+  import { walletApi } from "../services/wallet";
 
-  let toAddress = '';
-  let amount = '';
+  let toAddress = "";
+  let amount = "";
   let loading = false;
-  let error = '';
-  let success = '';
+  let error = "";
+  let success = "";
   let fees: any = null;
 
   async function fetchFees() {
     try {
       fees = await api.estimateFee();
     } catch (e) {
-      console.error('Failed to fetch fees:', e);
+      console.error("Failed to fetch fees:", e);
     }
   }
 
@@ -22,22 +22,22 @@
 
     try {
       loading = true;
-      error = '';
-      success = '';
+      error = "";
+      success = "";
 
       const tx = {
         from_address: $wallet.public_key,
         to_address: toAddress,
         amount: Number(amount),
-        private_key: $wallet.private_key
+        private_key: $wallet.private_key,
       };
 
       await api.createTransaction(tx);
-      success = 'Transaction sent successfully!';
-      toAddress = '';
-      amount = '';
+      success = "Transaction sent successfully!";
+      toAddress = "";
+      amount = "";
     } catch (e) {
-      error = 'Failed to send transaction';
+      error = "Failed to send transaction";
       console.error(e);
     } finally {
       loading = false;
@@ -50,10 +50,12 @@
 {#if $wallet}
   <div class="p-6 bg-white rounded-lg shadow">
     <h2 class="text-2xl font-bold mb-4">Send Bitcoin</h2>
-    
+
     <form on:submit|preventDefault={handleSend} class="space-y-4">
       <div>
-        <label for="toAddress" class="block text-sm font-medium text-gray-700">To Address</label>
+        <label for="toAddress" class="block text-sm font-medium text-gray-700"
+          >To Address</label
+        >
         <input
           type="text"
           id="toAddress"
@@ -64,7 +66,9 @@
       </div>
 
       <div>
-        <label for="amount" class="block text-sm font-medium text-gray-700">Amount (BTC)</label>
+        <label for="amount" class="block text-sm font-medium text-gray-700"
+          >Amount (BTC)</label
+        >
         <input
           type="number"
           id="amount"
@@ -100,7 +104,7 @@
         disabled={loading}
         class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
       >
-        {loading ? 'Sending...' : 'Send'}
+        {loading ? "Sending..." : "Send"}
       </button>
     </form>
   </div>

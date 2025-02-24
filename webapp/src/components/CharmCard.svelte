@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ProcessedCharm } from "../services/charms";
+  import type { ProcessedCharm } from "../types";
   import placeholderImage from "../assets/placeholder.jpg";
   import { transferDialog } from "../stores/transfer";
 
@@ -54,6 +54,22 @@
         <p class="mt-1 text-sm text-gray-500">
           Output: {charm.outputIndex}
         </p>
+        {#if charm.commitTxId || charm.spellTxId}
+          <div class="mt-2 flex flex-col gap-2">
+            {#if charm.commitTxId}
+              <div class="bg-gray-50 px-2 py-1 rounded text-xs">
+                <span class="text-gray-500">Commit:</span>
+                <span class="font-mono">{charm.commitTxId}</span>
+              </div>
+            {/if}
+            {#if charm.spellTxId}
+              <div class="bg-gray-50 px-2 py-1 rounded text-xs">
+                <span class="text-gray-500">Spell:</span>
+                <span class="font-mono">{charm.spellTxId}</span>
+              </div>
+            {/if}
+          </div>
+        {/if}
       </div>
       <span class="text-lg font-medium text-blue-600 tabular-nums">
         {charm.amount.toLocaleString()}

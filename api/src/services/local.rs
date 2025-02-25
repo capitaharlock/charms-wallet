@@ -61,6 +61,7 @@ pub fn get_change_address() -> WalletResult<String> {
     Ok(address.assume_checked().to_string())
 }
 
+// DELETE Replaced by charms one
 pub fn get_prev_txs(tx: &Transaction) -> WalletResult<Vec<String>> {
     let rpc_client = get_rpc_client()?;
     let mut prev_txs = Vec::new();

@@ -1,10 +1,17 @@
 import { decodeTx } from "../../utils/txDecoder";
-import { charmsTransactionService } from "../charms/transaction";
+import { transactionService } from "./index";
 import type { SignedTransaction } from "../../types";
 
 export class SignTransactionService {
     async signBothTransactions(
-        transactions: { commit_tx: string; spell_tx: string },
+        transactions: {
+            commit_tx: string;
+            spell_tx: string;
+            taproot_data: {
+                script: string;
+                control_block: string;
+            };
+        },
         privateKey: string,
         onProgress: (message: string) => void
     ): Promise<{
@@ -14,7 +21,7 @@ export class SignTransactionService {
         // First sign the commit transaction
         onProgress("Step 1: Signing commit transaction...");
         console.log("Before signing commit transaction");
-        const signedCommitTx = await charmsTransactionService.signTransaction(
+        const signedCommitTx = await transactionService.signTransaction(
             transactions.commit_tx,
             privateKey
         );
@@ -26,15 +33,17 @@ export class SignTransactionService {
             throw new Error("Failed to decode commit transaction");
         }
 
-        // Then sign the spell transaction using the commit tx info
+        // Then sign the spell transaction using the commit tx info and taproot data
         onProgress("Step 2: Signing spell transaction...");
-        const signedSpellTx = await charmsTransactionService.signSpellTransaction(
+        const signedSpellTx = await transactionService.signSpellTransaction(
             transactions.spell_tx,
             {
                 txid: signedCommitTx.txid,
                 vout: 0,
                 scriptPubKey: commitTxDecoded.outputs[0].scriptPubKey,
                 amount: commitTxDecoded.outputs[0].value / 100000000,
+                script: transactions.taproot_data.script,
+                control_block: transactions.taproot_data.control_block
             },
             privateKey
         );

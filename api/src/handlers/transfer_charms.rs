@@ -1,19 +1,25 @@
 use crate::models::TransferCharmsRequest;
 use axum::{http::StatusCode, Json};
-use bitcoin::{consensus::encode, Amount, FeeRate};
-use charms::{spell::NormalizedSpell, spell::Spell, tx};
+use bitcoin::{
+    consensus::encode,
+    secp256k1::{Keypair, Secp256k1},
+    Amount, FeeRate, XOnlyPublicKey,
+};
+use charms::{
+    script, spell::prove_spell_tx, spell::NormalizedSpell, spell::Spell, tx, wallet::get_prev_txs,
+};
+use rand::thread_rng;
 use serde_json::json;
+use std::path::PathBuf;
 use std::str::FromStr;
 use tracing::{debug, error, info};
 
-use crate::services::local::{
-    get_change_address, get_funding_utxo_value, get_prev_txs, parse_outpoint,
-};
+use crate::services::local::{get_change_address, get_funding_utxo_value, parse_outpoint};
 
-pub async fn transfer_charms(
+pub async fn prove_spell(
     Json(req): Json<TransferCharmsRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
-    info!("=== Starting transfer_charms handler ===");
+    info!("=== Starting prove_spell handler ===");
     info!("Request details:");
     info!("  - Destination address: {}", req.destination_address);
     info!("  - Funding UTXO ID: {}", req.funding_utxo_id);
@@ -48,6 +54,7 @@ pub async fn transfer_charms(
     };
 
     // Validate spell structure using normalized()
+    debug!("Validate spell structure");
     if let Err(e) = spell.normalized() {
         error!("Invalid spell structure: {}", e);
         return Err((
@@ -59,40 +66,27 @@ pub async fn transfer_charms(
         ));
     }
 
-    // Convert spell to transaction
-    debug!("Converting spell to transaction");
-    debug!(
-        "Spell content: {}",
-        serde_json::to_string_pretty(&spell).unwrap()
-    );
-    let tx = match std::panic::catch_unwind(|| tx::from_spell(&spell)) {
-        Ok(tx) => {
-            debug!("Transaction created successfully");
-            tx
-        }
-        Err(e) => {
-            let error_msg = if let Some(s) = e.downcast_ref::<String>() {
-                s.clone()
-            } else if let Some(s) = e.downcast_ref::<&str>() {
-                s.to_string()
-            } else {
-                "Unknown error during transaction creation".to_string()
-            };
-            error!("Transaction creation failed: {}", error_msg);
-            error!(
-                "Spell that caused error: {}",
-                serde_json::to_string_pretty(&spell).unwrap()
-            );
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({
-                    "status": "error",
-                    "message": format!("Failed to create transaction: {}", error_msg),
-                    "spell": spell
-                })),
-            ));
-        }
-    };
+    // 1 Create the spell tx
+    let tx = tx::from_spell(&spell);
+
+    // 2 We dont need the app_bins to tokens or nfts
+    let app_bins: Vec<PathBuf> = vec![];
+
+    // 3 Get the previous transactions
+    let prev_txs = txs_by_txid(wallet::get_prev_txs(&tx)?)?;
+
+    // RJJ we need to call the prove_spell_tx function here that will return the 2 txs to sign
+
+    /*
+    spell: Spell,
+    tx: bitcoin::Transaction,
+    app_bins: Vec<PathBuf>,
+    prev_txs: BTreeMap<Txid, bitcoin::Transaction>,
+    funding_utxo: OutPoint,
+    funding_utxo_value: u64,
+    change_address: String,
+    fee_rate: f64,
+    */
 
     // Get funding utxo and value
     debug!("Getting funding UTXO from: {}", req.funding_utxo_id);
@@ -195,8 +189,8 @@ pub async fn transfer_charms(
     };
 
     // Parse fee rate (using minimum fee rate)
-    let fee_rate = FeeRate::from_sat_per_kwu((1.0 * 250.0) as u64);
-    debug!("Using fee rate: {} sat/kwu", (1.0 * 250.0) as u64);
+    let fee_rate = FeeRate::from_sat_per_kwu(500);
+    debug!("Using fee rate: {} sat/kwu", 500);
 
     // Get spell data
     debug!("Normalizing spell and preparing spell data");
@@ -226,6 +220,14 @@ pub async fn transfer_charms(
 
     // Create both transactions using add_spell
     debug!("Creating commit and spell transactions");
+    let secp256k1 = Secp256k1::new();
+    let keypair = Keypair::new(&secp256k1, &mut thread_rng());
+    let (public_key, _) = XOnlyPublicKey::from_keypair(&keypair);
+
+    // Create the script and control block
+    let script = script::data_script(public_key, &spell_data);
+    let control_block = script::control_block(public_key, script.clone());
+
     let [commit_tx, spell_tx] = tx::add_spell(
         tx,
         &spell_data,
@@ -237,16 +239,22 @@ pub async fn transfer_charms(
     );
     debug!("Transactions created successfully");
 
-    // Serialize both transactions to hex without signing
+    // Serialize transactions and additional data
     let commit_tx_hex = encode::serialize_hex(&commit_tx);
     let spell_tx_hex = encode::serialize_hex(&spell_tx);
+    let script_hex = script.to_string();
+    let control_block_hex = hex::encode(control_block.serialize());
 
     Ok(Json(json!({
         "status": "success",
         "message": "Transfer request processed successfully",
         "transactions": {
             "commit_tx": commit_tx_hex,
-            "spell_tx": spell_tx_hex
+            "spell_tx": spell_tx_hex,
+            "taproot_data": {
+                "script": script_hex,
+                "control_block": control_block_hex
+            }
         }
     })))
 }

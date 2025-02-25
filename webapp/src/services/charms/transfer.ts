@@ -1,9 +1,9 @@
-import { CHARMS_API_URL } from '../shared/constants';
+import { WALLET_API_URL } from '../shared/constants';
 
 import type { TransferCharmsResponse } from '../../types';
 
 export class TransferCharmsService {
-    private readonly API_URL = `${CHARMS_API_URL}/wallet/transfer_charms`;
+    private readonly API_URL = `${WALLET_API_URL}/wallet/prove_spell`;
 
     async transferCharms(
         recipient: string,

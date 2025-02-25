@@ -55,14 +55,14 @@ async fn main() {
         .route("/wallet/balance/{address}", get(handlers::get_balance))
         .route("/wallet/broadcast", post(handlers::broadcast_transaction))
         .route(
-            "/wallet/transfer_charms",
+            "/wallet/prove_spell",
             get(|| async {
-                tracing::info!("GET /wallet/transfer_charms");
+                tracing::info!("GET /wallet/prove_spell");
                 "OK"
             })
-            .post(handlers::transfer_charms)
+            .post(handlers::prove_spell)
             .options(|| async {
-                tracing::info!("OPTIONS /wallet/transfer_charms - Preflight request received");
+                tracing::info!("OPTIONS /wallet/prove_spell - Preflight request received");
                 "OK"
             }),
         )

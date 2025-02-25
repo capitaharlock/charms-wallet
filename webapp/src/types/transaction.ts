@@ -54,3 +54,27 @@ export interface UnsignedTx {
     rawTx: RawTx;
     needsConfirmation: true;
 }
+
+export interface CommitTxInfo {
+    txid: string;
+    vout: number;
+    scriptPubKey: string;
+    amount: number;
+    script: string;
+    control_block: string;
+}
+
+export interface TaprootData {
+    script: string;
+    control_block: string;
+}
+
+export interface TransferCharmsResponse {
+    status: string;
+    message: string;
+    transactions: {
+        commit_tx: string;
+        spell_tx: string;
+        taproot_data: TaprootData;
+    };
+}

@@ -1,8 +1,8 @@
-import { CHARMS_API_URL, EXPLORER_URL } from '../shared/constants';
+import { WALLET_API_URL, EXPLORER_URL } from '../shared/constants';
 import type { SignedTransaction, BroadcastResponse } from '../../types';
 
 export class BroadcastTransactionService {
-    private readonly API_URL = `${CHARMS_API_URL}/wallet/broadcast`;
+    private readonly API_URL = `${WALLET_API_URL}/wallet/broadcast`;
 
     async broadcastTransaction(tx_hex: string): Promise<BroadcastResponse> {
         const response = await fetch(this.API_URL, {
@@ -18,8 +18,9 @@ export class BroadcastTransactionService {
             throw new Error(`Failed to broadcast transaction: ${responseText}`);
         }
 
+        let data;
         try {
-            const data = JSON.parse(responseText);
+            data = JSON.parse(responseText);
             console.log("Bitcoin-cli command:", data.command);
             return data;
         } catch (e) {

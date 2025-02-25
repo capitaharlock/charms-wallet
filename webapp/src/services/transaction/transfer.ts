@@ -1,16 +1,17 @@
-import type { UTXO } from '../../types';
+import type { UTXO, TransferParams, RawTx, UnsignedTx, TxDetails } from '../../types';
 import { utxoService } from '../wallet';
 import { addresses } from '../../stores/addresses';
 import { utxos } from '../../stores/utxos';
 import { get } from 'svelte/store';
-import { ec as EC } from 'elliptic';
-import { WALLET_API_URL } from '../shared/constants';
-import type { TransferParams, RawTx, UnsignedTx, TxDetails } from '../../types';
+import { transactionService } from './index';
 
+/**
+ * Service for handling basic Bitcoin transfers.
+ * Focuses on UTXO selection and fee calculation.
+ * Uses transactionService for signing and broadcastTransactionService for broadcasting.
+ */
 class TransferService {
-    private readonly API_BASE = `${WALLET_API_URL}/wallet`;
     private readonly FEE_RATE = 1; // sats/vbyte
-    private readonly ec = new EC('secp256k1');
 
     private estimateFee(inputCount: number, outputCount: number): number {
         const estimatedSize =
@@ -140,76 +141,6 @@ class TransferService {
             };
         } catch (error) {
             console.error('Transfer failed:', error);
-            throw error;
-        }
-    }
-
-    private hashTransaction(tx: RawTx): Uint8Array {
-        // Create a simple hash of the transaction for now
-        // In a real implementation, this would follow Bitcoin's transaction hashing protocol
-        const txString = JSON.stringify({
-            version: tx.version,
-            inputs: tx.inputs.map(input => ({
-                txid: input.txid,
-                vout: input.vout,
-                sequence: input.sequence,
-                value: input.value,
-            })),
-            outputs: tx.outputs.map(output => ({
-                address: output.address,
-                value: output.value
-            }))
-        });
-
-        // Convert string to Uint8Array
-        const encoder = new TextEncoder();
-        return encoder.encode(txString);
-    }
-
-    signTransaction(tx: RawTx, privateKey: string): { signedTx: string } {
-        try {
-            // Create a proper Bitcoin transaction hex string
-            // This is a placeholder - in a real implementation, you would:
-            // 1. Create proper Bitcoin transaction structure
-            // 2. Sign it with the private key
-            // 3. Serialize it to hex format
-            // For now, we'll use a dummy transaction for testing
-            const dummyTx = "0200000001f9f34e95b9d5c8abcd20fc5bd4a825d1517be62f0f775e5f36da944d9452e550000000006b483045022100c86e9a111afc90f64b4904bd609e9eaed80d48ca17c162b1aca0a788ac3526f002207bb79b60d4fc6526329bf18a77135dc566c7896516845f94792137a045d3af9101210307ff6baa4719819ef79f11aa18ea71e9d58be0aa6f2e46a887a476cd64c7e2e8ffffffff0250c30000000000001976a914e039335769578cb6275f59b6f8dab568f9196bb688ac2c8c0100000000001976a914b0f6e64ea993466f84050becc101062bb502b4e488ac00000000";
-
-            const signedTx = {
-                ...tx,
-                hex: dummyTx,
-            };
-
-            return { signedTx: JSON.stringify(signedTx) };
-        } catch (error) {
-            console.error('Local signing failed:', error);
-            throw new Error('Failed to sign transaction locally');
-        }
-    }
-
-    async broadcastTransaction(signedTx: string): Promise<{ txid: string }> {
-        try {
-            const parsedTx = JSON.parse(signedTx);
-            const response = await fetch(`${this.API_BASE}/broadcast`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    tx_hex: parsedTx.hex
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`Broadcasting failed: ${errorData.error || 'Unknown error'}`);
-            }
-
-            const result = await response.json();
-            return { txid: result.txid };
-        } catch (error) {
-            console.error('Broadcast failed:', error);
             throw error;
         }
     }

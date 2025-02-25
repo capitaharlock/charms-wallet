@@ -2,7 +2,7 @@ import { CHARMS_API_URL } from '../shared/constants';
 import type { ProcessedCharm, SpellTemplate } from '../../types';
 import type { UTXO } from '../../types';
 
-export { charmsTransactionService } from './transaction';
+export { transactionService } from '../transaction';
 export { transferCharmsService } from './transfer';
 
 class CharmsService {
@@ -63,7 +63,7 @@ class CharmsService {
         // Use minimum amount for sats to avoid dust
         const MIN_SATS = 546; // Bitcoin dust limit
 
-        const spell = `version: 1
+        const spell = `version: 2
 apps:
   $01: ${type}/${appId}/${appVk}
 ins:

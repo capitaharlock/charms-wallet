@@ -5,11 +5,11 @@
     import Modal from "./Modal.svelte";
     import { wallet } from "../stores/wallet";
     import { utxos } from "../stores/utxos";
-    import { charmsTransactionService } from "../services/charms/transaction";
     import { charms } from "../stores/charms";
     import {
         broadcastTransactionService,
         signTransactionService,
+        transactionService,
     } from "../services/transaction";
     import type { SignedTransaction } from "../types";
 
@@ -34,9 +34,8 @@
     let signedSpellTx: SignedTransaction | null = null;
     $: signedCommitTx; // Add this line
     $: signedSpellTx; // Add this line
-    let result: {
-        transactions: { commit_tx: string; spell_tx: string };
-    } | null = null;
+    import type { TransferCharmsResponse } from "../types";
+    let result: TransferCharmsResponse | null = null;
 
     // Get the current wallet address
     wallet.subscribe((w) => {
@@ -86,7 +85,7 @@
         try {
             // Use the original charm address for transfer
             const finalSpell = charmsService.composeTransferSpell(
-                { ...charm }, // Keep original charm address
+                { ...charm },
                 transferAmount,
                 destinationAddress,
             );
@@ -146,7 +145,10 @@
                 signedCommitTx: signedCommitResult,
                 signedSpellTx: signedSpellResult,
             } = await signTransactionService.signBothTransactions(
-                result.transactions,
+                {
+                    ...result.transactions,
+                    taproot_data: result.transactions.taproot_data,
+                },
                 currentWallet.private_key,
                 (message) => {
                     logMessages = [...logMessages, message];

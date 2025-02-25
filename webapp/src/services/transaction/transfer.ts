@@ -1,58 +1,14 @@
-import type { UTXO } from './utxo';
-import { utxoService } from './utxo';
-import { addresses } from '../stores/addresses';
-import { utxos } from '../stores/utxos';
+import type { UTXO } from '../../types';
+import { utxoService } from '../wallet';
+import { addresses } from '../../stores/addresses';
+import { utxos } from '../../stores/utxos';
 import { get } from 'svelte/store';
-
-interface TransferParams {
-    amount: number;
-    recipientAddress: string;
-    privateKey: string;
-    sourceAddress: string;
-}
-
-export interface TxInput {
-    txid: string;
-    vout: number;
-    value: number;
-}
-
-export interface TxOutput {
-    address: string;
-    value: number;
-}
-
-export interface TxDetails {
-    inputs: TxInput[];
-    outputs: TxOutput[];
-    fee: number;
-    changeAddress: string;
-}
-
-export interface RawTx {
-    version: number;
-    inputs: {
-        txid: string;
-        vout: number;
-        sequence: number;
-        value: number;
-    }[];
-    outputs: {
-        address: string;
-        value: number;
-    }[];
-}
-
-export interface UnsignedTx {
-    details: TxDetails;
-    rawTx: RawTx;
-    needsConfirmation: true;
-}
-
 import { ec as EC } from 'elliptic';
+import { WALLET_API_URL } from '../shared/constants';
+import type { TransferParams, RawTx, UnsignedTx, TxDetails } from '../../types';
 
 class TransferService {
-    private readonly API_BASE = 'http://localhost:9123/wallet';
+    private readonly API_BASE = `${WALLET_API_URL}/wallet`;
     private readonly FEE_RATE = 1; // sats/vbyte
     private readonly ec = new EC('secp256k1');
 
@@ -111,7 +67,7 @@ class TransferService {
         throw new Error(`Insufficient balance. Required: ${utxoService.formatSats(totalRequired)} BTC (including fee)`);
     }
 
-    async transfer({ amount, recipientAddress, privateKey, sourceAddress }: TransferParams) {
+    async transfer({ amount, recipientAddress, privateKey, sourceAddress }: TransferParams): Promise<UnsignedTx> {
         try {
             const amountInSats = Math.floor(amount * 100_000_000);
 
@@ -125,7 +81,7 @@ class TransferService {
             const totalInput = selectedUtxos.reduce((sum, utxo) => sum + utxo.value, 0);
 
             // Prepare transaction details with actual input count
-            const txDetails = {
+            const txDetails: TxDetails = {
                 inputs: selectedUtxos.map(utxo => ({
                     txid: utxo.txid,
                     vout: utxo.vout,
@@ -162,7 +118,7 @@ class TransferService {
             }
 
             // Create raw transaction format
-            const rawTx = {
+            const rawTx: RawTx = {
                 version: 2,
                 inputs: txDetails.inputs.map(input => ({
                     txid: input.txid,

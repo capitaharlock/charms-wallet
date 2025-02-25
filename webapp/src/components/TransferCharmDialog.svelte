@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { ProcessedCharm } from "../types";
     import { charmsService } from "../services/charms/index";
-    import transferCharms from "../services/transferCharms";
+    import { transferCharmsService } from "../services/charms";
     import Modal from "./Modal.svelte";
     import { wallet } from "../stores/wallet";
     import { utxos } from "../stores/utxos";
@@ -97,7 +97,7 @@
             ];
 
             const fundingUtxoId = `${charm.txid}:${charm.outputIndex}`;
-            const response = await transferCharms(
+            const response = await transferCharmsService.transferCharms(
                 destinationAddress,
                 transferAmount,
                 finalSpell,

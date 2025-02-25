@@ -1,6 +1,6 @@
 <script lang="ts">
     import { utxos } from "../../stores/utxos";
-    import { utxoService } from "../../services/utxo";
+    import { utxoService } from "../../services/wallet";
 </script>
 
 <div class="border-t border-gray-200 pt-4">

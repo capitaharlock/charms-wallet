@@ -1,6 +1,6 @@
 <script lang="ts">
     export let title: string;
-    import type { SignedTransaction } from "../../services/signTransactionService";
+    import type { SignedTransaction } from "../../types";
 
     export let transaction: SignedTransaction | null;
 

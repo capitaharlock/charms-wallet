@@ -2,8 +2,8 @@
     import { wallet } from "../stores/wallet";
     import { addresses } from "../stores/addresses";
     import { utxos } from "../stores/utxos";
-    import { transferService } from "../services/transfer";
-    import type { TxDetails, RawTx } from "../services/transfer";
+    import { transferService } from "../services/transaction";
+    import type { TxDetails, RawTx } from "../types";
     import { get } from "svelte/store";
     import ConfirmDialog from "./ConfirmDialog.svelte";
     import TransferForm from "./transfer/TransferForm.svelte";

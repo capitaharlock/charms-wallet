@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { RawTx } from "../../services/transfer";
+    import type { RawTx } from "../../types";
     export let rawTx: RawTx;
 </script>
 

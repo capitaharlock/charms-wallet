@@ -1,32 +1,8 @@
 import { decodeTx } from "../../utils/txDecoder";
 import { charmsTransactionService } from "../charms/transaction";
-import type { SignedTransaction } from "../shared/types";
-import { WALLET_API_URL } from '../shared/constants';
-import axios from 'axios';
+import type { SignedTransaction } from "../../types";
 
 export class SignTransactionService {
-    async estimateFee(): Promise<{ fast: number; medium: number; slow: number }> {
-        try {
-            const response = await axios.get(`${WALLET_API_URL}/wallet/fees`);
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    async createTransaction(tx: {
-        from_address: string;
-        to_address: string;
-        amount: number;
-        private_key: string;
-    }): Promise<void> {
-        try {
-            await axios.post(`${WALLET_API_URL}/wallet/transaction`, tx);
-        } catch (error) {
-            throw error;
-        }
-    }
-
     async signBothTransactions(
         transactions: { commit_tx: string; spell_tx: string },
         privateKey: string,

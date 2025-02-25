@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { utxoService } from "../../services/utxo";
-    import type { TxDetails } from "../../services/transfer";
+    import { utxoService } from "../../services/wallet";
+    import type { TxDetails } from "../../types";
 
     export let transaction: TxDetails;
 </script>

@@ -7,4 +7,5 @@ export interface UTXO {
         block_time?: number;
     };
     value: number;
+    scriptPubKey?: string;
 }

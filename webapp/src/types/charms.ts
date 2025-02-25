@@ -30,7 +30,16 @@ export interface SpellTransactionInput {
     amount: number;
 }
 
+export interface CommitTxInfo {
+    txid: string;
+    vout: number;
+    scriptPubKey: string;
+    amount: number;
+}
+
 export interface TransferCharmsResponse {
-    commit_tx: string;
-    spell_tx: string;
+    transactions: {
+        commit_tx: string;
+        spell_tx: string;
+    };
 }

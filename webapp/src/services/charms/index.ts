@@ -10,7 +10,6 @@ class CharmsService {
     composeTransferSpell(charm: ProcessedCharm, transferAmount: number, destinationAddress: string): string {
         const remainingAmount = charm.amount - transferAmount;
         const [type, appId, appVk] = charm.app.split("/");
-        const appKey = "$01";
 
         // Log composition details for debugging
         console.log('Composing spell with:', {

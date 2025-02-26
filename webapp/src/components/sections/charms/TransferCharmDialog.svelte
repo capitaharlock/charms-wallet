@@ -45,8 +45,6 @@
         }
     });
 
-    $: utxoAddress = $utxos[currentAddress]?.[0]?.txid ? currentAddress : "";
-
     $: if (transferAmount > charm.amount) {
         transferAmount = charm.amount;
     }

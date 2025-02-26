@@ -1,11 +1,8 @@
 use crate::error::{WalletError, WalletResult};
-use crate::models::ProveSpellRequest;
-use crate::services::transaction;
+use crate::models;
+use crate::services;
 use bitcoin::consensus::encode;
-use charms::{
-    spell::{prove_spell_tx, Spell},
-    tx,
-};
+use charms;
 use std::path::PathBuf;
 use tracing::info;
 
@@ -16,38 +13,41 @@ impl SpellProver {
         Self
     }
 
-    pub async fn prove_spell(&self, req: &ProveSpellRequest) -> WalletResult<SpellProofResult> {
+    pub async fn prove_spell(
+        &self,
+        req: &models::ProveSpellRequest,
+    ) -> WalletResult<SpellProofResult> {
         info!(
             "Processing transfer request to: {}",
             req.destination_address
         );
 
         // Parse and validate spell using the Spell struct
-        let spell: Spell = serde_yaml::from_str(&req.spell_json)
+        let spell: charms::spell::Spell = serde_yaml::from_str(&req.spell_json)
             .map_err(|e| WalletError::InvalidSpell(format!("Invalid spell YAML: {}", e)))?;
 
         // Create the spell tx
-        let tx = tx::from_spell(&spell);
+        let tx = charms::tx::from_spell(&spell);
 
         // Get previous transactions
-        let prev_txs = transaction::get_prev_txs(&tx)?;
+        let prev_txs = services::transaction::get_prev_txs(&tx)?;
 
-        let prev_txs_map = tx::txs_by_txid(prev_txs).map_err(|e| {
+        let prev_txs_map = charms::tx::txs_by_txid(prev_txs).map_err(|e| {
             WalletError::BitcoinError(format!("Failed to process previous transactions: {}", e))
         })?;
 
         // Get funding utxo and value
-        let funding_utxo = transaction::parse_outpoint(&req.funding_utxo_id)?;
-        let funding_utxo_value = transaction::get_funding_utxo_value(funding_utxo)?;
+        let funding_utxo = services::transaction::parse_outpoint(&req.funding_utxo_id)?;
+        let funding_utxo_value = services::transaction::get_funding_utxo_value(funding_utxo)?;
 
         // Get change address
-        let change_address = transaction::get_change_address()?;
+        let change_address = services::transaction::get_change_address()?;
 
         // Create transactions using prove_spell_tx
         let app_bins: Vec<PathBuf> = vec![];
         let fee_rate = 2.0; // fee rate in sat/vB
 
-        let [commit_tx, spell_tx] = prove_spell_tx(
+        let [commit_tx, spell_tx] = charms::spell::prove_spell_tx(
             spell,
             tx,
             app_bins,

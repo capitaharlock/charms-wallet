@@ -1,7 +1,7 @@
 <!-- src/components/CreateWallet.svelte -->
 <script lang="ts">
-  import { wallet } from "../stores/wallet";
-  import { walletApi } from "../services/wallet";
+  import { wallet } from "@stores/wallet";
+  import { walletApi } from "@services/wallet";
   import CryptoJS from "crypto-js";
 
   let mode: "create" | "import" = "create";

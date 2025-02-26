@@ -1,8 +1,8 @@
 // src/stores/utxos.ts
 import { writable, derived } from 'svelte/store';
-import type { UTXO } from '../types';
-import { addresses } from './addresses';
-import { walletApi } from '../services/wallet';
+import type { UTXO } from '@app-types/utxo';
+import { addresses } from '@stores/addresses';
+import { walletApi } from '@services/wallet';
 
 function createUTXOStore() {
   const { subscribe, set, update } = writable<{ [address: string]: UTXO[] }>({});

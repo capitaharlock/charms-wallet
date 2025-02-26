@@ -37,6 +37,7 @@ export interface TxDetails {
 
 export interface RawTx {
     version: number;
+    hex: string;
     inputs: {
         txid: string;
         vout: number;
@@ -67,6 +68,13 @@ export interface CommitTxInfo {
 export interface TaprootData {
     script: string;
     control_block: string;
+}
+
+export interface SpellTransactionInput {
+    txid: string;
+    vout: number;
+    scriptPubKey: string;
+    amount: number;
 }
 
 export interface TransferCharmsResponse {

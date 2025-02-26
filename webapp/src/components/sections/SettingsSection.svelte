@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { apiUrl, saveApiUrl } from "../../stores/settings";
+  import { apiUrl, saveApiUrl } from "@stores/settings";
 
   let currentUrl = $apiUrl;
 

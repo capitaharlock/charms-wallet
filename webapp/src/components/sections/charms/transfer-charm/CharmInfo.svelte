@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { ProcessedCharm } from "../../services/charms";
-    import placeholderImage from "../../assets/placeholder.jpg";
+    import type { ProcessedCharm } from "@app-types/charms";
+    import placeholderImage from "@/assets/placeholder.jpg";
 
     export let charm: ProcessedCharm;
     export let transferAmount: number;

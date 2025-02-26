@@ -1,7 +1,6 @@
-import { sha256, hexToBytes, bytesToHex, sanitizeHexString } from './common';
+import { sha256, hexToBytes, bytesToHex, sanitizeHexString, ec } from './common';
 import { taprootTransactionService } from './taproot';
-import type { CommitTxInfo, SignedTransaction } from '../../types';
-import { ec } from './common';
+import type { CommitTxInfo, SignedTransaction } from '@app-types/transaction';
 
 class TransactionService {
     /**

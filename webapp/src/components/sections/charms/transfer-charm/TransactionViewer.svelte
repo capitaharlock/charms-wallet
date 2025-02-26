@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { decodeTx } from "../../utils/txDecoder";
+    import { decodeTx } from "@utils/txDecoder";
 
     export let transactionHex: string | null;
     export let title: string;

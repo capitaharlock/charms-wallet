@@ -4,7 +4,7 @@
   import { transferDialog } from "../../stores/transfer";
   import CharmsSection from "../sections/CharmsSection.svelte";
   import SettingsSection from "../sections/SettingsSection.svelte";
-  import TransferCharmDialog from "../TransferCharmDialog.svelte";
+  import TransferCharmDialog from "@components/sections/charms/TransferCharmDialog.svelte";
 
   type Section = "wallets" | "charms" | "settings";
 

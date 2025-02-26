@@ -1,16 +1,13 @@
-import { decodeTx } from "../../utils/txDecoder";
+import { decodeTx } from "@utils/txDecoder";
 import { transactionService } from "./index";
-import type { SignedTransaction } from "../../types";
+import type { SignedTransaction, TaprootData } from "@app-types/transaction";
 
 export class SignTransactionService {
     async signBothTransactions(
         transactions: {
             commit_tx: string;
             spell_tx: string;
-            taproot_data: {
-                script: string;
-                control_block: string;
-            };
+            taproot_data: TaprootData;
         },
         privateKey: string,
         onProgress: (message: string) => void

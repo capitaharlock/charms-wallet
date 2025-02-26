@@ -1,5 +1,5 @@
-import { WALLET_API_URL, EXPLORER_URL } from '../shared/constants';
-import type { SignedTransaction, BroadcastResponse } from '../../types';
+import { WALLET_API_URL, EXPLORER_URL } from '@services/shared/constants';
+import type { SignedTransaction, BroadcastResponse } from '@app-types/transaction';
 
 export class BroadcastTransactionService {
     private readonly API_URL = `${WALLET_API_URL}/wallet/broadcast`;

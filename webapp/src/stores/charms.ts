@@ -1,8 +1,8 @@
 // src/stores/charms.ts
 import { writable, get } from 'svelte/store';
-import type { ProcessedCharm } from '../types';
-import { charmsService } from '../services/charms/index';
-import type { UTXO } from '../types';
+import type { ProcessedCharm } from '@app-types/charms';
+import type { UTXO } from '@app-types/utxo';
+import { charmsService } from '@services/charms';
 
 function createCharmsStore() {
   const { subscribe, set } = writable<ProcessedCharm[]>([]);

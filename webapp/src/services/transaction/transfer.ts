@@ -1,7 +1,8 @@
-import type { UTXO, TransferParams, RawTx, UnsignedTx, TxDetails } from '../../types';
-import { utxoService } from '../wallet';
-import { addresses } from '../../stores/addresses';
-import { utxos } from '../../stores/utxos';
+import type { TransferParams, RawTx, UnsignedTx, TxDetails } from '@app-types/transaction';
+import type { UTXO } from '@app-types/utxo';
+import { utxoService } from '@services/wallet';
+import { addresses } from '@stores/addresses';
+import { utxos } from '@stores/utxos';
 import { get } from 'svelte/store';
 import { transactionService } from './index';
 
@@ -131,6 +132,7 @@ class TransferService {
                     address: output.address,
                     value: output.value,
                 })),
+                hex: '', // Will be populated by the transaction service
             };
 
             // Return unsigned transaction for confirmation

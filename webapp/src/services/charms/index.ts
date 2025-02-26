@@ -1,8 +1,7 @@
-import { CHARMS_API_URL } from '../shared/constants';
-import type { ProcessedCharm, SpellTemplate } from '../../types';
-import type { UTXO } from '../../types';
+import { CHARMS_API_URL } from '@services/shared/constants';
+import type { ProcessedCharm, SpellTemplate, UTXO } from '@app-types/index';
 
-export { transactionService } from '../transaction';
+export { transactionService } from '@services/transaction';
 export { transferCharmsService } from './transfer';
 
 class CharmsService {

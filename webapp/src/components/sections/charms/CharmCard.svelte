@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { ProcessedCharm } from "../types";
-  import placeholderImage from "../assets/placeholder.jpg";
-  import { transferDialog } from "../stores/transfer";
+  import type { ProcessedCharm } from "@app-types/charms";
+  import placeholderImage from "@/assets/placeholder.jpg";
+  import { transferDialog } from "@stores/transfer";
 
   export let charm: ProcessedCharm;
   let showDetails = false;

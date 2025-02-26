@@ -1,24 +1,24 @@
 <script lang="ts">
-    import type { ProcessedCharm } from "../types";
-    import { charmsService } from "../services/charms/index";
-    import Modal from "./Modal.svelte";
-    import { wallet } from "../stores/wallet";
-    import { utxos } from "../stores/utxos";
-    import { charms } from "../stores/charms";
+    import type { ProcessedCharm } from "@app-types/charms";
+    import { charmsService } from "@services/charms/index";
+    import Modal from "@components/Modal.svelte";
+    import { wallet } from "@stores/wallet";
+    import { utxos } from "@stores/utxos";
+    import { charms } from "@stores/charms";
     import {
         broadcastTransactionService,
         signTransactionService,
         transactionService,
-    } from "../services/transaction";
-    import type { SignedTransaction } from "../types";
-    import { createTransferCharmTxs } from "../services/transfer-charm/createTxs";
+    } from "@services/transaction";
+    import type { SignedTransaction } from "@app-types/transaction";
+    import { createTransferCharmTxs } from "@services/transfer-charm/createTxs";
 
     // Import new components
-    import CharmInfo from "./transfer-charm/CharmInfo.svelte";
-    import TransferForm from "./transfer-charm/TransferForm.svelte";
-    import SpellViewer from "./transfer-charm/SpellViewer.svelte";
-    import TransactionViewer from "./transfer-charm/TransactionViewer.svelte";
-    import SignedTransactionViewer from "./transfer-charm/SignedTransactionViewer.svelte";
+    import CharmInfo from "@components/sections/charms/transfer-charm/CharmInfo.svelte";
+    import TransferForm from "@components/sections/charms/transfer-charm/TransferForm.svelte";
+    import SpellViewer from "@components/sections/charms/transfer-charm/SpellViewer.svelte";
+    import TransactionViewer from "@components/sections/charms/transfer-charm/TransactionViewer.svelte";
+    import SignedTransactionViewer from "@components/sections/charms/transfer-charm/SignedTransactionViewer.svelte";
 
     export let charm: ProcessedCharm;
     export let show: boolean = false;
@@ -35,7 +35,7 @@
     let signedSpellTx: SignedTransaction | null = null;
     $: signedCommitTx;
     $: signedSpellTx;
-    import type { TransferCharmsResponse } from "../types";
+    import type { TransferCharmsResponse } from "@app-types/transaction";
     let result: TransferCharmsResponse | null = null;
 
     // Get the current wallet address

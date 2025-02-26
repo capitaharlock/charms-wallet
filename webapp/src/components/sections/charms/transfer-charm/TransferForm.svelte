@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ProcessedCharm } from "../../services/charms";
+    import type { ProcessedCharm } from "@app-types/charms";
 
     export let charm: ProcessedCharm;
     export let transferAmount: number;

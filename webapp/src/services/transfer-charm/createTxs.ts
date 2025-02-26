@@ -1,12 +1,13 @@
-import { WALLET_API_URL } from "../shared/constants";
-import { decodeTx } from "../../utils/txDecoder";
+import { WALLET_API_URL } from "@services/shared/constants";
+import { decodeTx } from "@utils/txDecoder";
+import type { TransferCharmsResponse } from "@app-types/transaction";
 
 export async function createTransferCharmTxs(
     destinationAddress: string,
     transferAmount: number,
     spellJson: string,
     fundingUtxoId: string,
-) {
+): Promise<TransferCharmsResponse> {
     console.log("Creating transfer transactions with params:", {
         destinationAddress,
         transferAmount,
@@ -46,5 +47,5 @@ export async function createTransferCharmTxs(
     console.log("Decoded Commit Transaction:", decodedCommitTx);
     console.log("Decoded Spell Transaction:", decodedSpellTx);
 
-    return result;
+    return result as TransferCharmsResponse;
 }

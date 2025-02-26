@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { wallet } from "../stores/wallet";
-  import { addresses } from "../stores/addresses";
-  import { totalBalance, confirmedBalance } from "../stores/utxos";
-  import { walletApi } from "../services/wallet";
+  import { wallet } from "@stores/wallet";
+  import { addresses } from "@stores/addresses";
+  import { totalBalance, confirmedBalance } from "@stores/utxos";
+  import { walletApi } from "@services/wallet";
   import { onMount } from "svelte";
-  import ConfirmDialog from "./ConfirmDialog.svelte";
-  import AddressManager from "./AddressManager.svelte";
-  import UTXOList from "./UTXOList.svelte";
-  import TransferDialog from "./TransferBtcDialog.svelte";
+  import ConfirmDialog from "@components/ConfirmDialog.svelte";
+  import AddressManager from "@components/sections/wallet/AddressManager.svelte";
+  import UTXOList from "@components/sections/wallet/UTXOList.svelte";
+  import TransferDialog from "@components/sections/wallet/transfer-btc/TransferBtcDialog.svelte";
 
   let showPrivateKey = false;
   let showClearConfirm = false;

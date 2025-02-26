@@ -22,24 +22,3 @@ export interface SpellTemplate {
         charms: Record<string, number>;
     }>;
 }
-
-export interface SpellTransactionInput {
-    txid: string;
-    vout: number;
-    scriptPubKey: string;
-    amount: number;
-}
-
-export interface CommitTxInfo {
-    txid: string;
-    vout: number;
-    scriptPubKey: string;
-    amount: number;
-}
-
-export interface TransferCharmsResponse {
-    transactions: {
-        commit_tx: string;
-        spell_tx: string;
-    };
-}

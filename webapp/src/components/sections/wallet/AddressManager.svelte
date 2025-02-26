@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { wallet } from "../stores/wallet";
-  import { addresses } from "../stores/addresses";
+  import { wallet } from "@stores/wallet";
+  import { addresses } from "@stores/addresses";
   import { onMount } from "svelte";
-  import ConfirmDialog from "./ConfirmDialog.svelte";
+  import ConfirmDialog from "@components/ConfirmDialog.svelte";
   let newCustomAddress = "";
   let addressError = "";
   let addressToDelete: string | null = null;

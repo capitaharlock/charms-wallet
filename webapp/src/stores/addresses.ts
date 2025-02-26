@@ -1,10 +1,5 @@
 import { writable, get } from 'svelte/store';
-
-export interface AddressEntry {
-  address: string;
-  index: number;
-  created: string;
-}
+import type { AddressEntry } from '@app-types/wallet';
 
 function createAddressStore() {
   const { subscribe, set, update } = writable<AddressEntry[]>([]);
@@ -25,7 +20,7 @@ function createAddressStore() {
       });
 
       // Then clear UTXOs for this address
-      const { utxos } = await import('./utxos');
+      const { utxos } = await import('@stores/utxos');
       const currentUtxos = get(utxos);
       const newUtxos = { ...currentUtxos };
       delete newUtxos[address];
@@ -42,7 +37,7 @@ function createAddressStore() {
       set([]);
 
       // Also clear UTXOs when clearing addresses
-      const { utxos } = await import('./utxos');
+      const { utxos } = await import('@stores/utxos');
       utxos.clear();
     }
   };

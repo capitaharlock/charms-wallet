@@ -1,5 +1,5 @@
 import { writable } from "svelte/store"
-import type { Wallet } from "../types"
+import type { Wallet } from "@app-types/wallet"
 
 const WALLET_STORAGE_KEY = "bitcoin_wallet"
 const ENCRYPTED_WALLET_KEY = "encrypted_wallet"
@@ -27,8 +27,8 @@ function createWalletStore() {
             set(null)
 
             // Import and clear other stores
-            import('./addresses').then(({ addresses }) => addresses.clear())
-            import('./utxos').then(({ utxos }) => utxos.clear())
+            import('@stores/addresses').then(({ addresses }) => addresses.clear())
+            import('@stores/utxos').then(({ utxos }) => utxos.clear())
         },
     }
 }

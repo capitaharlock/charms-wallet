@@ -1,19 +1,19 @@
 <script lang="ts">
     // TransferBtcDialog - Handles basic Bitcoin transfers
-    import { wallet } from "../stores/wallet";
-    import { addresses } from "../stores/addresses";
-    import { utxos } from "../stores/utxos";
+    import { wallet } from "@stores/wallet";
+    import { addresses } from "@stores/addresses";
+    import { utxos } from "@stores/utxos";
     import {
         transferService,
         transactionService,
         broadcastTransactionService,
-    } from "../services/transaction";
-    import type { TxDetails, RawTx } from "../types";
+    } from "@services/transaction";
+    import type { TxDetails, RawTx } from "@app-types/transaction";
     import { get } from "svelte/store";
-    import ConfirmDialog from "./ConfirmDialog.svelte";
-    import TransferForm from "./transfer-btc/TransferForm.svelte";
-    import RawTransactionDisplay from "./transfer-btc/RawTransactionDisplay.svelte";
-    import UTXOListDisplay from "./transfer-btc/UTXOListDisplay.svelte";
+    import ConfirmDialog from "@components/ConfirmDialog.svelte";
+    import TransferForm from "@components/sections/wallet/transfer-btc/TransferForm.svelte";
+    import RawTransactionDisplay from "@components/sections/wallet/transfer-btc/RawTransactionDisplay.svelte";
+    import UTXOListDisplay from "@components/sections/wallet/transfer-btc/UTXOListDisplay.svelte";
 
     let showConfirmDialog = false;
     let isSigningMode = false;

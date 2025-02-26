@@ -1,8 +1,8 @@
 <!-- src/components/UTXOList.svelte -->
 <script lang="ts">
-  import { utxos, totalBalance, confirmedBalance } from "../stores/utxos";
-  import { addresses } from "../stores/addresses";
-  import { walletApi } from "../services/wallet";
+  import { utxos, totalBalance, confirmedBalance } from "@stores/utxos";
+  import { addresses } from "@stores/addresses";
+  import { walletApi } from "@services/wallet";
   import { onMount } from "svelte";
 
   let loading = false;

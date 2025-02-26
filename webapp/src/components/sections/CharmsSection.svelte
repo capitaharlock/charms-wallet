@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { charms } from "../../stores/charms";
-  import { utxos } from "../../stores/utxos";
-  import CharmCard from "../CharmCard.svelte";
-  import { activeSection } from "../../stores/navigation";
+  import { charms } from "@stores/charms";
+  import { utxos } from "@stores/utxos";
+  import CharmCard from "@components/sections/charms/CharmCard.svelte";
+  import { activeSection } from "@stores/navigation";
 
   let loading: boolean;
   charms.loading.subscribe((value: boolean) => (loading = value));

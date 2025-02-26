@@ -1,3 +1,9 @@
+export interface AddressEntry {
+    address: string;
+    index: number;
+    created: string;
+}
+
 export interface Wallet {
     public_key: string;
     private_key: string;

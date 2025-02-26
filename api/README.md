@@ -1,4 +1,4 @@
-## Debug run in windows
+## Debug run
 cargo install cargo-watch
-cargo watch -x run
---> will run the API at | INFO api: Listening on 0.0.0.0:9123
+RUST_LOG=debug cargo watch -x run 
+--> will run in 0.0.0.0:3355

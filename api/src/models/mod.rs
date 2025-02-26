@@ -14,12 +14,7 @@ pub struct CreateWalletRequest {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct TransactionRequest {
-    pub from_address: String,
-    pub to_address: String,
-    pub amount: f64,
-    pub private_key: String,
-}
+pub struct TransactionRequest {}
 
 #[derive(Debug, Serialize)]
 pub struct TransactionResponse {

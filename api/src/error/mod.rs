@@ -15,12 +15,6 @@ pub enum WalletError {
     InvalidAddress(String),
     #[error("Network error: {0}")]
     NetworkError(String),
-    #[error("Invalid amount: {0}")]
-    InvalidAmount(String),
-    #[error("Invalid transaction: {0}")]
-    InvalidTransaction(String),
-    #[error("Invalid key: {0}")]
-    InvalidKey(String),
     #[error("Invalid spell: {0}")]
     InvalidSpell(String),
     #[error("Spell error: {0}")]
@@ -35,9 +29,6 @@ impl IntoResponse for WalletError {
             WalletError::BitcoinError(msg) => (StatusCode::BAD_REQUEST, msg),
             WalletError::InvalidAddress(msg) => (StatusCode::BAD_REQUEST, msg),
             WalletError::NetworkError(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
-            WalletError::InvalidAmount(msg) => (StatusCode::BAD_REQUEST, msg),
-            WalletError::InvalidTransaction(msg) => (StatusCode::BAD_REQUEST, msg),
-            WalletError::InvalidKey(msg) => (StatusCode::BAD_REQUEST, msg),
             WalletError::InvalidSpell(msg) => (StatusCode::BAD_REQUEST, msg),
             WalletError::SpellError(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
         };

@@ -52,7 +52,7 @@ pub struct BroadcastTxResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TransferCharmsRequest {
+pub struct ProveSpellRequest {
     pub spell_json: String,
     pub funding_utxo_id: String,
     pub destination_address: String,

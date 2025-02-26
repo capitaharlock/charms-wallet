@@ -1,8 +1,0 @@
-Provide a setup.sh script to be executed in mac.
-This script will make changes in sourcecode, so provide full scripts.
-If size is to big to one prompt, please modularize and provide scripts one by one.
-If need more scripts to complete the assigned task, please ask me and I will upload those.
-Fix current issues that I tell you, try to keep every other code that is working if no need to modify it.
-No need to create temp files etc, the setup.sh script can replace the content of the modified files.
-Don't add comments that look like instructions to me. Just comments to help understand the code, but short and concise.
-If you provided a previous setup.sh that was correctly executed (Assume that if i dont say the opposite) dont add again non modified scripts to the next setup.sh generation.

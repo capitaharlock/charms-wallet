@@ -1,7 +1,4 @@
-// api/src/services/mod.rs
-
-pub mod external;
-pub mod local;
-
-pub use external::ExternalWalletService;
-pub use local::LocalWalletService;
+pub mod health;
+pub mod spell;
+pub mod transaction;
+pub mod wallet;

@@ -1,16 +1,8 @@
 use crate::error::{WalletError, WalletResult};
 use crate::models::*;
-use bitcoin::key::CompressedPublicKey;
-use bitcoin::secp256k1::{Secp256k1, SecretKey};
-use bitcoin::{consensus::encode::serialize_hex, Network, OutPoint, PrivateKey, Transaction, Txid};
+use bitcoin::{consensus::encode, hashes::hex::FromHex, OutPoint, Transaction, Txid};
 use bitcoincore_rpc::{Auth, Client as RpcClient, RpcApi};
-use rand::thread_rng;
 use std::{env, str::FromStr};
-
-pub struct LocalWalletService {
-    network: Network,
-    secp: Secp256k1<bitcoin::secp256k1::All>,
-}
 
 fn get_rpc_client() -> WalletResult<RpcClient> {
     let host = env::var("BITCOIN_RPC_HOST").unwrap_or_else(|_| "localhost".to_string());
@@ -71,54 +63,42 @@ pub fn get_prev_txs(tx: &Transaction) -> WalletResult<Vec<String>> {
             .map_err(|e| {
                 WalletError::BitcoinError(format!("Failed to get raw transaction: {}", e))
             })?;
-        prev_txs.push(serialize_hex(&raw_tx));
+        prev_txs.push(encode::serialize_hex(&raw_tx));
     }
 
     Ok(prev_txs)
 }
 
-impl LocalWalletService {
+pub struct TransactionBroadcaster {
+    rpc_client: RpcClient,
+}
+
+impl TransactionBroadcaster {
     pub fn new() -> WalletResult<Self> {
-        Ok(Self {
-            network: Network::Testnet,
-            secp: Secp256k1::new(),
-        })
+        let rpc_client = RpcClient::new(
+            "http://localhost:48332",
+            Auth::UserPass("hello".into(), "world".into()),
+        )
+        .map_err(|e| WalletError::BitcoinError(format!("RPC client creation failed: {}", e)))?;
+
+        Ok(Self { rpc_client })
     }
 
-    pub async fn create_wallet(&self, password: &str) -> WalletResult<KeyPair> {
-        let wallet_name = format!("wallet_{}", password);
+    pub fn broadcast(&self, request: &BroadcastTxRequest) -> WalletResult<BroadcastTxResponse> {
+        use bitcoin::consensus::encode::Decodable;
+        let tx_bytes = Vec::<u8>::from_hex(&request.tx_hex)
+            .map_err(|e| WalletError::BitcoinError(format!("Invalid hex: {}", e)))?;
+        let mut cursor = std::io::Cursor::new(tx_bytes);
+        let tx = Transaction::consensus_decode(&mut cursor)
+            .map_err(|e| WalletError::BitcoinError(format!("Deserialization failed: {}", e)))?;
 
-        let host = env::var("BITCOIN_RPC_HOST").unwrap_or_else(|_| "localhost".to_string());
-        let port = env::var("BITCOIN_RPC_PORT").unwrap_or_else(|_| "18332".to_string());
-        let user = env::var("BITCOIN_RPC_USER").unwrap_or_else(|_| "hello".to_string());
-        let password = env::var("BITCOIN_RPC_PASSWORD").unwrap_or_else(|_| "world".to_string());
+        let txid = self
+            .rpc_client
+            .send_raw_transaction(&tx)
+            .map_err(|e| WalletError::BitcoinError(format!("Broadcast failed: {}", e)))?;
 
-        let rpc_client = RpcClient::new(
-            &format!("http://{}:{}/wallet/{}", host, port, wallet_name),
-            Auth::UserPass(user, password),
-        )
-        .map_err(|e| WalletError::BitcoinError(e.to_string()))?;
-
-        match rpc_client.create_wallet(&wallet_name, None, None, None, None) {
-            Ok(_) => (),
-            Err(e) => {
-                if !e.to_string().contains("Database already exists") {
-                    return Err(WalletError::BitcoinError(e.to_string()));
-                }
-            }
-        }
-
-        let secret_key = SecretKey::new(&mut thread_rng());
-        let private_key = PrivateKey::new(secret_key, self.network);
-        let compressed_pub_key = CompressedPublicKey::from_private_key(&self.secp, &private_key)
-            .map_err(|e| WalletError::BitcoinError(e.to_string()))?;
-
-        let address = bitcoin::Address::p2wpkh(&compressed_pub_key, self.network);
-
-        Ok(KeyPair {
-            private_key: private_key.to_string(),
-            public_key: compressed_pub_key.to_string(),
-            address: address.to_string(),
+        Ok(BroadcastTxResponse {
+            txid: txid.to_string(),
         })
     }
 }

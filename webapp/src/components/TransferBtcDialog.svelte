@@ -1,14 +1,19 @@
 <script lang="ts">
+    // TransferBtcDialog - Handles basic Bitcoin transfers
     import { wallet } from "../stores/wallet";
     import { addresses } from "../stores/addresses";
     import { utxos } from "../stores/utxos";
-    import { transferService } from "../services/transaction";
+    import {
+        transferService,
+        transactionService,
+        broadcastTransactionService,
+    } from "../services/transaction";
     import type { TxDetails, RawTx } from "../types";
     import { get } from "svelte/store";
     import ConfirmDialog from "./ConfirmDialog.svelte";
-    import TransferForm from "./transfer/TransferForm.svelte";
-    import RawTransactionDisplay from "./transfer/RawTransactionDisplay.svelte";
-    import UTXOListDisplay from "./transfer/UTXOListDisplay.svelte";
+    import TransferForm from "./transfer-btc/TransferForm.svelte";
+    import RawTransactionDisplay from "./transfer-btc/RawTransactionDisplay.svelte";
+    import UTXOListDisplay from "./transfer-btc/UTXOListDisplay.svelte";
 
     let showConfirmDialog = false;
     let isSigningMode = false;
@@ -92,13 +97,18 @@
         try {
             error = "";
             isLoading = true;
-            const result = await transferService.signTransaction(
-                pendingTx.rawTx,
+            const result = await transactionService.signTransaction(
+                pendingTx.rawTx.hex,
                 $wallet.private_key,
             );
-            const parsedSignedTx = JSON.parse(result.signedTx);
-            signatures = parsedSignedTx.signatures;
-            signedTx = result.signedTx;
+            const signedTxData = {
+                signatures: [result.signature],
+                hex: result.hex,
+                hash: result.hash,
+                txid: result.txid,
+            };
+            signatures = signedTxData.signatures;
+            signedTx = JSON.stringify(signedTxData);
         } catch (err) {
             error = err instanceof Error ? err.message : "Signing failed";
         } finally {
@@ -112,7 +122,7 @@
         try {
             error = "";
             isLoading = true;
-            await transferService.broadcastTransaction(signedTx);
+            await broadcastTransactionService.broadcastTransaction(signedTx);
             showConfirmDialog = false;
             onClose();
         } catch (err) {

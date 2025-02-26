@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { ProcessedCharm } from "../types";
     import { charmsService } from "../services/charms/index";
-    import { transferCharmsService } from "../services/charms";
     import Modal from "./Modal.svelte";
     import { wallet } from "../stores/wallet";
     import { utxos } from "../stores/utxos";
@@ -12,6 +11,7 @@
         transactionService,
     } from "../services/transaction";
     import type { SignedTransaction } from "../types";
+    import { createTransferCharmTxs } from "../services/transfer-charm/createTxs";
 
     // Import new components
     import CharmInfo from "./transfer-charm/CharmInfo.svelte";
@@ -29,11 +29,12 @@
         "tb1qfmdy2ek8j3uga4q76td3ka2dhmwrag3jwhppd9";
     let logMessages: string[] = [];
     let currentAddress: string = "";
-    let transactionHex: string | null = null;
+    let commitTxHex: string | null = null;
+    let spellTxHex: string | null = null;
     let signedCommitTx: SignedTransaction | null = null;
     let signedSpellTx: SignedTransaction | null = null;
-    $: signedCommitTx; // Add this line
-    $: signedSpellTx; // Add this line
+    $: signedCommitTx;
+    $: signedSpellTx;
     import type { TransferCharmsResponse } from "../types";
     let result: TransferCharmsResponse | null = null;
 
@@ -67,7 +68,7 @@
         }
     }
 
-    async function handleTransfer() {
+    async function handleCreate2txs() {
         // Validate transfer requirements
         if (!destinationAddress?.trim()) {
             logMessages = [...logMessages, "Destination address is required"];
@@ -96,19 +97,18 @@
             ];
 
             const fundingUtxoId = `${charm.txid}:${charm.outputIndex}`;
-            const response = await transferCharmsService.transferCharms(
+            const response = await createTransferCharmTxs(
                 destinationAddress,
                 transferAmount,
                 finalSpell,
                 fundingUtxoId,
             );
             result = response;
-            transactionHex = response.transactions.spell_tx;
+            commitTxHex = response.transactions.commit_tx;
+            spellTxHex = response.transactions.spell_tx;
             logMessages = [
                 ...logMessages,
-                `Transfer successful! Transaction ready to sign.`,
-                `Commit Transaction: ${response.transactions.commit_tx}`,
-                `Spell Transaction: ${response.transactions.spell_tx}`,
+                `Transfer successful! Transactions ready to sign.`,
             ];
         } catch (error: any) {
             logMessages = [
@@ -157,7 +157,8 @@
 
             signedCommitTx = signedCommitResult;
             signedSpellTx = signedSpellResult;
-            transactionHex = null;
+            commitTxHex = null;
+            spellTxHex = null;
 
             // Broadcast the signed transactions
             const { commitData, spellData } =
@@ -206,7 +207,8 @@
     function handleClose() {
         logMessages = [];
         transferAmount = 0;
-        transactionHex = null;
+        commitTxHex = null;
+        spellTxHex = null;
         result = null;
         signedCommitTx = null;
         signedSpellTx = null;
@@ -228,12 +230,15 @@
 
         <SpellViewer {spellTemplate} {logMessages} />
 
-        {#if transactionHex && !signedCommitTx && !signedSpellTx}
+        {#if (commitTxHex || spellTxHex) && !signedCommitTx && !signedSpellTx}
             <TransactionViewer
                 title="Commit Transaction"
-                transactionHex={result?.transactions?.commit_tx || ""}
+                transactionHex={commitTxHex || ""}
             />
-            <TransactionViewer title="Spell Transaction" {transactionHex} />
+            <TransactionViewer
+                title="Spell Transaction"
+                transactionHex={spellTxHex || ""}
+            />
         {/if}
 
         {#if signedCommitTx || signedSpellTx}
@@ -258,7 +263,7 @@
         >
             Close
         </button>
-        {#if transactionHex}
+        {#if commitTxHex && spellTxHex}
             <button
                 type="button"
                 on:click={signAndBroadcastTxs}
@@ -269,10 +274,10 @@
         {:else}
             <button
                 type="button"
-                on:click={handleTransfer}
+                on:click={handleCreate2txs}
                 class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-                Start Transfer
+                Create transfer Txs
             </button>
         {/if}
     </div>

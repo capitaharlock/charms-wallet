@@ -1,7 +1,7 @@
 // api/src/services/external.rs
 use crate::error::{WalletError, WalletResult};
 use crate::models::*;
-use bitcoin::{consensus::deserialize, hashes::hex::FromHex, Address, Network, Transaction, Txid};
+use bitcoin::{consensus::deserialize, hashes::hex::FromHex, Address, Network, Transaction};
 use bitcoincore_rpc::{Auth, Client as RpcClient, RpcApi};
 use reqwest::Client;
 use serde_json::Value;

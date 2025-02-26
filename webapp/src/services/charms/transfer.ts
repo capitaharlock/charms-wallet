@@ -3,7 +3,7 @@ import { WALLET_API_URL } from '../shared/constants';
 import type { TransferCharmsResponse } from '../../types';
 
 export class TransferCharmsService {
-    private readonly API_URL = `${WALLET_API_URL}/wallet/prove_spell`;
+    private readonly API_URL = `${WALLET_API_URL}/spell/prove_spell`;
 
     async transferCharms(
         recipient: string,

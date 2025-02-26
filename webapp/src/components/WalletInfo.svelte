@@ -7,7 +7,7 @@
   import ConfirmDialog from "./ConfirmDialog.svelte";
   import AddressManager from "./AddressManager.svelte";
   import UTXOList from "./UTXOList.svelte";
-  import TransferDialog from "./TransferDialog.svelte";
+  import TransferDialog from "./TransferBtcDialog.svelte";
 
   let showPrivateKey = false;
   let showClearConfirm = false;

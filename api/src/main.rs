@@ -8,7 +8,6 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use dotenv::dotenv;
 use http::{header, Method};
 use std::{env, net::SocketAddr, str::FromStr, time::Duration};
 use tower_http::cors::{Any, CorsLayer};
@@ -55,14 +54,14 @@ async fn main() {
         .route("/wallet/balance/{address}", get(handlers::get_balance))
         .route("/wallet/broadcast", post(handlers::broadcast_transaction))
         .route(
-            "/wallet/prove_spell",
+            "/spell/prove_spell",
             get(|| async {
-                tracing::info!("GET /wallet/prove_spell");
+                tracing::info!("GET /spell/prove_spell");
                 "OK"
             })
             .post(handlers::prove_spell)
             .options(|| async {
-                tracing::info!("OPTIONS /wallet/prove_spell - Preflight request received");
+                tracing::info!("OPTIONS /spell/prove_spell - Preflight request received");
                 "OK"
             }),
         )
